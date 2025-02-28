@@ -3,6 +3,7 @@
 import os
 import sys
 import json
+import argparse  # Add argparse for command-line arguments
 from logo import print_logo
 from colorama import Fore, Style, init
 import locale
@@ -204,7 +205,24 @@ def select_language():
         return False
 
 def main():
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(description="Cursor Free VIP Tool")
+    parser.add_argument('--appImage', type=str, help='Path to the AppImage file')
+    args = parser.parse_args()
+    
+    # Normalize AppImage path if provided
+    if args.appImage:
+        args.appImage = os.path.abspath(os.path.expanduser(args.appImage))
+    
     print_logo()
+    
+    # Add info about the --appImage flag with flush=True
+    print(f"{Fore.CYAN}{EMOJI['INFO']} {translator.get('menu.app_image_info')}{Style.RESET_ALL}")
+    
+    # Show when the program is launched with the AppImage flag
+    if args.appImage:
+        print(f"{Fore.GREEN}{EMOJI['SUCCESS']} {translator.get('menu.app_image_detected', path=args.appImage)}{Style.RESET_ALL}")
+    
     print_menu()
     
     while True:
@@ -217,15 +235,17 @@ def main():
                 return
             elif choice == "1":
                 import reset_machine_manual
-                reset_machine_manual.run(translator)
+                reset_machine_manual.run(translator, args.appImage)  # Pass appImage path
                 print_menu()
             elif choice == "2":
                 import cursor_register
-                cursor_register.main(translator)
+                # Pass the appImage parameter to the register function
+                cursor_register.main(translator, app_image_path=args.appImage)
                 print_menu()
             elif choice == "3":
                 import cursor_register_manual
-                cursor_register_manual.main(translator)
+                # Pass the appImage parameter to the manual register function
+                cursor_register_manual.main(translator, app_image_path=args.appImage)
                 print_menu()
             elif choice == "4":
                 import quit_cursor

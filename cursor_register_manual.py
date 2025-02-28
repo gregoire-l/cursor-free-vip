@@ -203,7 +203,7 @@ class CursorRegistration:
             # Reset machine ID
             print(f"{Fore.CYAN}{EMOJI['UPDATE']} {self.translator.get('register.reset_machine_id')}...{Style.RESET_ALL}")
             resetter = MachineIDResetter(self.translator)  # Create instance with translator
-            if not resetter.reset_machine_ids():  # Call reset_machine_ids method directly
+            if not resetter.reset_machine_ids(self.app_image_path):  # Pass the app_image_path parameter
                 raise Exception("Failed to reset machine ID")
             
             # Save account information to file
@@ -243,13 +243,15 @@ class CursorRegistration:
         auth_manager = CursorAuth(translator=self.translator)
         return auth_manager.update_auth(email, access_token, refresh_token)
 
-def main(translator=None):
+def main(translator=None, app_image_path=None):
     """Main function to be called from main.py"""
     print(f"\n{Fore.CYAN}{'='*50}{Style.RESET_ALL}")
     print(f"{Fore.CYAN}{EMOJI['START']} {translator.get('register.title')}{Style.RESET_ALL}")
     print(f"{Fore.CYAN}{'='*50}{Style.RESET_ALL}")
-
+    
+    # No need to normalize path again
     registration = CursorRegistration(translator)
+    registration.app_image_path = app_image_path  # Store app_image_path in the registration instance
     registration.start()
 
     print(f"\n{Fore.CYAN}{'='*50}{Style.RESET_ALL}")
@@ -257,4 +259,4 @@ def main(translator=None):
 
 if __name__ == "__main__":
     from main import translator as main_translator
-    main(main_translator) 
+    main(main_translator)

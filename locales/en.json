@@ -12,7 +12,9 @@
         "program_terminated": "Program was terminated by user",
         "error_occurred": "An error occurred: {error}. Please try again",
         "press_enter": "Press Enter to Exit",
-        "disable_auto_update": "Disable Cursor Auto-Update"
+        "disable_auto_update": "Disable Cursor Auto-Update",
+        "app_image_info": "Tip: You can launch this tool with --appImage flag to patch AppImage directly",
+        "app_image_detected": "AppImage detected: {path}"
     },
     "languages": {
         "en": "English",
@@ -68,7 +70,28 @@
         "version_less_than_0_45": "Cursor Version < 0.45.0, Skip Patching getMachineId",
         "detecting_version": "Detecting Cursor Version",
         "patching_getmachineid": "Patching getMachineId",
-        "version_greater_than_0_45": "Cursor Version >= 0.45.0, Patching getMachineId"
+        "version_greater_than_0_45": "Cursor Version >= 0.45.0, Patching getMachineId",
+        "checking_cursor_version": "Checking Cursor Version",
+        "processing_appimage": "Processing AppImage: {path}",
+        "extracting_appimage": "Extracting AppImage Contents",
+        "appimage_extracted": "AppImage Extracted Successfully",
+        "extract_failed": "Failed to Extract AppImage: {error}",
+        "rebuilding_appimage": "Rebuilding AppImage",
+        "creating_appimage_backup": "Creating AppImage Backup",
+        "appimage_rebuilt": "AppImage Rebuilt Successfully",
+        "rebuild_failed": "Failed to Rebuild AppImage: {error}",
+        "appimagetool_not_found": "AppImageTool Not Found",
+        "manual_rebuild_instructions": "To manually rebuild the AppImage, install appimagetool and run: 'appimagetool {extracted} your-cursor.AppImage'",
+        "checking_appimage_version": "Checking AppImage Version",
+        "appimage_version_not_supported": "AppImage Version Not Supported",
+        "no_extracted_dir": "Extracted Directory Not Found",
+        "no_appimage_path": "AppImage Path Not Provided",
+        "appimage_not_found": "AppImage Not Found: {path}",
+        "rebuild_appimage_failed": "Failed to Rebuild AppImage",
+        "cleanup_error": "Error Cleaning Temporary Files: {error}",
+        "appimage_extract_failed": "Failed to Extract AppImage",
+        "cleaning_temp_files": "Cleaning Temporary Files",
+        "using_appimage": "Using AppImage: {path}"
     },
     "register": {
         "title": "Cursor Registration Tool",
