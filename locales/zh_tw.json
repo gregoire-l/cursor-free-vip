@@ -112,7 +112,17 @@
         "update_cursor_auth_info": "更新Cursor認證信息",
         "setting_password": "設置密碼",
         "manual_code_input": "手動輸入驗證碼",
-        "manual_email_input": "手動輸入郵箱地址"
+        "manual_email_input": "手動輸入郵箱地址",
+        "password": "密碼",
+        "first_name": "名字",
+        "last_name": "姓氏",
+        "exit_signal": "退出信號",
+        "email_address": "郵箱地址",
+        "config_created": "配置已創建",
+        "verification_failed": "驗證失敗",
+        "verification_error": "驗證錯誤: {error}",
+        "config_option_added": "配置項已添加: {option}",
+        "config_updated": "配置已更新"
     },
     "auth": {
         "title": "Cursor 認證管理器",
@@ -197,7 +207,8 @@
         "blocked_domains_loaded_timeout": "加載被屏蔽的域名超時: {timeout}秒",
         "blocked_domains_loaded_timeout_error": "加載被屏蔽的域名超時錯誤: {error}",
         "available_domains_loaded": "獲取到 {count} 個可用域名",
-        "domains_filtered": "過濾後剩餘 {count} 個可用域名"
+        "domains_filtered": "過濾後剩餘 {count} 個可用域名",
+        "trying_to_create_email": "嘗試創建郵箱: {email}"
     },
     "update": {
         "title": "禁用 Cursor 自动更新",
@@ -211,5 +222,13 @@
         "directory_removed": "目錄已刪除",
         "creating_block_file": "創建阻止文件",
         "block_file_created": "阻止文件已創建"
+    },
+    "updater": {
+        "checking": "檢查更新...",
+        "new_version_available": "有新版本可用! (當前版本: {current}, 最新版本: {latest})",
+        "updating": "正在更新到最新版本。程序將自動重啟。",
+        "up_to_date": "您使用的是最新版本。",
+        "check_failed": "檢查更新失敗: {error}",
+        "continue_anyway": "繼續使用當前版本..."
     }
 } 

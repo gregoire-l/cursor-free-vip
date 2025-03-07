@@ -22,18 +22,21 @@ class CursorAuth:
     def __init__(self, translator=None):
         self.translator = translator
         # 判断操作系统
-        if os.name == "nt":  # Windows
+        if sys.platform == "win32":  # Windows
             self.db_path = os.path.join(
                 os.getenv("APPDATA"), "Cursor", "User", "globalStorage", "state.vscdb"
             )
-        elif os.name =='posix':
+        elif sys.platform == 'linux':
             self.db_path = os.path.expanduser(
                             "~/.config/Cursor/User/globalStorage/state.vscdb"
                         )
-        else:  # macOS
+        elif sys.platform == 'darwin':  # macOS
             self.db_path = os.path.expanduser(
                 "~/Library/Application Support/Cursor/User/globalStorage/state.vscdb"
             )
+        else:
+            print(f"{Fore.RED}{EMOJI['ERROR']} {self.translator.get('auth.unsupported_platform')}{Style.RESET_ALL}")
+            sys.exit(1)
 
         # 检查数据库文件是否存在
         if not os.path.exists(self.db_path):
@@ -87,13 +90,16 @@ class CursorAuth:
             
             # 设置要更新的键值对
             updates = []
+
+            updates.append(("cursorAuth/cachedSignUpType", "Auth_0"))
+
             if email is not None:
                 updates.append(("cursorAuth/cachedEmail", email))
             if access_token is not None:
                 updates.append(("cursorAuth/accessToken", access_token))
             if refresh_token is not None:
                 updates.append(("cursorAuth/refreshToken", refresh_token))
-                updates.append(("cursorAuth/cachedSignUpType", "Auth_0"))
+                
 
             # 使用事务来确保数据完整性
             cursor.execute("BEGIN TRANSACTION")
@@ -131,5 +137,3 @@ class CursorAuth:
             if conn:
                 conn.close()
                 print(f"{EMOJI['DB']} {Fore.CYAN} {self.translator.get('auth.database_connection_closed')}{Style.RESET_ALL}")
-
-

@@ -155,7 +155,17 @@
         "register_process_error": "Register Process Error: {error}",
         "setting_password": "Setting Password",
         "manual_code_input": "Manual Code Input",
-        "manual_email_input": "Manual Email Input"
+        "manual_email_input": "Manual Email Input",
+        "password": "Password",
+        "first_name": "First Name",
+        "last_name": "Last Name",
+        "exit_signal": "Exit Signal",
+        "email_address": "Email Address",
+        "config_created": "Config Created",
+        "verification_failed": "Verification Failed",
+        "verification_error": "Verification Error: {error}",
+        "config_option_added": "Config Option Added: {option}",
+        "config_updated": "Config Updated"
     },
     "auth": {
         "title": "Cursor Auth Manager",
@@ -243,7 +253,8 @@
         "blocked_domains_loaded_timeout": "Blocked Domains Loaded Timeout: {timeout}s",
         "blocked_domains_loaded_timeout_error": "Blocked Domains Loaded Timeout Error: {error}",
         "available_domains_loaded": "Available Domains Loaded: {count}",
-        "domains_filtered": "Domains Filtered: {count}"
+        "domains_filtered": "Domains Filtered: {count}",
+        "trying_to_create_email": "Trying to create email: {email}"
     },
     "update": {
         "title": "Disable Cursor Auto Update",
@@ -257,5 +268,13 @@
         "directory_removed": "Directory Removed",
         "creating_block_file": "Creating Block File",
         "block_file_created": "Block File Created"
+    },
+    "updater": {
+        "checking": "Checking for updates...",
+        "new_version_available": "New version available! (Current: {current}, Latest: {latest})",
+        "updating": "Updating to the latest version. The program will restart automatically.",
+        "up_to_date": "You are using the latest version.",
+        "check_failed": "Failed to check for updates: {error}",
+        "continue_anyway": "Continuing with current version..."
     }
 }

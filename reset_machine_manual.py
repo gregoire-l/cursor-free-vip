@@ -74,6 +74,58 @@ def get_cursor_paths(translator=None, appimage_dir=None) -> Tuple[str, str]:
         os.path.join(base_path, paths_map[system]["main"]),
     )
 
+def get_cursor_machine_id_path(translator=None) -> str:
+    """
+    Get Cursor machineId file path based on operating system
+    Returns:
+        str: Path to machineId file
+    """
+    if sys.platform == "win32":  # Windows
+        return os.path.join(os.getenv("APPDATA"), "Cursor", "machineId")
+    elif sys.platform == "linux":  # Linux
+        return os.path.expanduser("~/.config/Cursor/machineId")
+    elif sys.platform == "darwin":  # macOS
+        return os.path.expanduser("~/Library/Application Support/Cursor/machineId")
+    else:
+        raise OSError(f"Unsupported operating system: {sys.platform}")
+
+def get_workbench_cursor_path(translator=None) -> str:
+    """Get Cursor workbench.desktop.main.js path"""
+    system = platform.system()
+    
+    paths_map = {
+        "Darwin": {  # macOS
+            "base": "/Applications/Cursor.app/Contents/Resources/app",
+            "main": "out/vs/workbench/workbench.desktop.main.js"
+        },
+        "Windows": {
+            "base": os.path.join(os.getenv("LOCALAPPDATA", ""), "Programs", "Cursor", "resources", "app"),
+            "main": "out/vs/workbench/workbench.desktop.main.js"
+        },
+        "Linux": {
+            "bases": ["/opt/Cursor/resources/app", "/usr/share/cursor/resources/app"],
+            "main": "out/vs/workbench/workbench.desktop.main.js"
+        }
+    }
+
+    if system not in paths_map:
+        raise OSError(translator.get('reset.unsupported_os', system=system) if translator else f"不支持的操作系统: {system}")
+
+    if system == "Linux":
+        for base in paths_map["Linux"]["bases"]:
+            main_path = os.path.join(base, paths_map["Linux"]["main"])
+            if os.path.exists(main_path):
+                return main_path
+        raise OSError(translator.get('reset.linux_path_not_found') if translator else "在 Linux 系统上未找到 Cursor 安装路径")
+
+    base_path = paths_map[system]["base"]
+    main_path = os.path.join(base_path, paths_map[system]["main"])
+    
+    if not os.path.exists(main_path):
+        raise OSError(translator.get('reset.file_not_found', path=main_path) if translator else f"未找到 Cursor main.js 文件: {main_path}")
+        
+    return main_path
+
 def version_check(version: str, min_version: str = "", max_version: str = "", translator=None) -> bool:
     """Version number check"""
     version_pattern = r"^\d+\.\d+\.\d+$"
@@ -227,6 +279,77 @@ def check_cursor_version(translator, appimage_dir=None) -> bool:
         return version_check(version, min_version="0.45.0", translator=translator)
     except Exception as e:
         print(f"{Fore.RED}{EMOJI['ERROR']} {translator.get('reset.check_version_failed', error=str(e))}{Style.RESET_ALL}")
+        return False
+
+def modify_workbench_js(file_path: str, translator=None) -> bool:
+    """
+    Modify file content
+    """
+    try:
+        # Save original file permissions
+        original_stat = os.stat(file_path)
+        original_mode = original_stat.st_mode
+        original_uid = original_stat.st_uid
+        original_gid = original_stat.st_gid
+
+        # Create temporary file
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", errors="ignore", delete=False) as tmp_file:
+            # Read original content
+            with open(file_path, "r", encoding="utf-8", errors="ignore") as main_file:
+                content = main_file.read()
+
+            if sys.platform == "win32":
+                # Define replacement patterns
+                CButton_old_pattern = r'$(k,E(Ks,{title:"Upgrade to Pro",size:"small",get codicon(){return F.rocket},get onClick(){return t.pay}}),null)'
+                CButton_new_pattern = r'$(k,E(Ks,{title:"yeongpin GitHub",size:"small",get codicon(){return F.rocket},get onClick(){return function(){window.open("https://github.com/yeongpin/cursor-free-vip","_blank")}}}),null)'
+            elif sys.platform == "linux":
+                CButton_old_pattern = r'$(k,E(Ks,{title:"Upgrade to Pro",size:"small",get codicon(){return F.rocket},get onClick(){return t.pay}}),null)'
+                CButton_new_pattern = r'$(k,E(Ks,{title:"yeongpin GitHub",size:"small",get codicon(){return F.rocket},get onClick(){return function(){window.open("https://github.com/yeongpin/cursor-free-vip","_blank")}}}),null)'
+            elif sys.platform == "darwin":
+                CButton_old_pattern = r'M(x,I(as,{title:"Upgrade to Pro",size:"small",get codicon(){return $.rocket},get onClick(){return t.pay}}),null)'
+                CButton_new_pattern = r'M(x,I(as,{title:"yeongpin GitHub",size:"small",get codicon(){return $.rocket},get onClick(){return function(){window.open("https://github.com/yeongpin/cursor-free-vip","_blank")}}}),null)'
+
+            CBadge_old_pattern = r'<div>Pro Trial'
+            CBadge_new_pattern = r'<div>Pro'
+
+            CToast_old_pattern = r'notifications-toasts'
+            CToast_new_pattern = r'notifications-toasts hidden'
+
+            # Replace content
+            content = content.replace(CButton_old_pattern, CButton_new_pattern)
+            content = content.replace(CBadge_old_pattern, CBadge_new_pattern)
+            content = content.replace(CToast_old_pattern, CToast_new_pattern)
+
+            # Write to temporary file
+            tmp_file.write(content)
+            tmp_path = tmp_file.name
+
+        # Backup original file
+        backup_path = file_path + ".backup"
+        if os.path.exists(backup_path):
+            os.remove(backup_path)
+        shutil.copy2(file_path, backup_path)
+        
+        # Move temporary file to original position
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        shutil.move(tmp_path, file_path)
+
+        # Restore original permissions
+        os.chmod(file_path, original_mode)
+        if os.name != "nt":  # Not Windows
+            os.chown(file_path, original_uid, original_gid)
+
+        print(f"{Fore.GREEN}{EMOJI['SUCCESS']} {translator.get('reset.file_modified')}{Style.RESET_ALL}")
+        return True
+
+    except Exception as e:
+        print(f"{Fore.RED}{EMOJI['ERROR']} {translator.get('reset.modify_file_failed', error=str(e))}{Style.RESET_ALL}")
+        if "tmp_path" in locals():
+            try:
+                os.unlink(tmp_path)
+            except:
+                pass
         return False
 
 def modify_main_js(main_path: str, translator) -> bool:
@@ -393,11 +516,20 @@ class MachineIDResetter:
                 "~/Library/Application Support/Cursor/User/globalStorage/state.vscdb"
             ))
         elif sys.platform == "linux":  # Linux
-            self.db_path = os.path.abspath(os.path.expanduser(
-                "~/.config/Cursor/User/globalStorage/storage.json"
+            # 获取实际用户的主目录
+            sudo_user = os.environ.get('SUDO_USER')
+            if sudo_user:
+                actual_home = f"/home/{sudo_user}"
+            else:
+                actual_home = os.path.expanduser("~")
+                
+            self.db_path = os.path.abspath(os.path.join(
+                actual_home,
+                ".config/Cursor/User/globalStorage/storage.json"
             ))
-            self.sqlite_path = os.path.abspath(os.path.expanduser(
-                "~/.config/Cursor/User/globalStorage/state.vscdb"
+            self.sqlite_path = os.path.abspath(os.path.join(
+                actual_home,
+                ".config/Cursor/User/globalStorage/state.vscdb"
             ))
         else:
             raise NotImplementedError(f"Not Supported OS: {sys.platform}")
@@ -415,6 +547,8 @@ class MachineIDResetter:
 
         # Generate new sqmId
         sqm_id = "{" + str(uuid.uuid4()).upper() + "}"
+
+        self.update_machine_id_file(dev_device_id)
 
         return {
             "telemetry.devDeviceId": dev_device_id,
@@ -488,12 +622,12 @@ class MachineIDResetter:
             new_guid = str(uuid.uuid4())
             winreg.SetValueEx(key, "MachineGuid", 0, winreg.REG_SZ, new_guid)
             winreg.CloseKey(key)
-            print("Windows MachineGuid updated successfully")
+            print(f"{Fore.GREEN}{EMOJI['SUCCESS']} {self.translator.get('reset.windows_machine_guid_updated')}{Style.RESET_ALL}")
         except PermissionError:
-            print("Permission denied: Run as administrator to update Windows MachineGuid")
+            print(f"{Fore.RED}{EMOJI['ERROR']} {self.translator.get('reset.permission_denied')}{Style.RESET_ALL}")
             raise
         except Exception as e:
-            print(f"Failed to update Windows MachineGuid: {e}")
+            print(f"{Fore.RED}{EMOJI['ERROR']} {self.translator.get('reset.update_windows_machine_guid_failed', error=str(e))}{Style.RESET_ALL}")
             raise
 
     def _update_macos_platform_uuid(self, new_ids):
@@ -505,11 +639,11 @@ class MachineIDResetter:
                 cmd = f'sudo plutil -replace "UUID" -string "{new_ids["telemetry.macMachineId"]}" "{uuid_file}"'
                 result = os.system(cmd)
                 if result == 0:
-                    print("macOS Platform UUID updated successfully")
+                    print(f"{Fore.GREEN}{EMOJI['SUCCESS']} {self.translator.get('reset.macos_platform_uuid_updated')}{Style.RESET_ALL}")
                 else:
-                    raise Exception("Failed to execute plutil command")
+                    raise Exception(f"{Fore.RED}{EMOJI['ERROR']} {self.translator.get('reset.failed_to_execute_plutil_command')}{Style.RESET_ALL}")
         except Exception as e:
-            print(f"Failed to update macOS Platform UUID: {e}")
+            print(f"{Fore.RED}{EMOJI['ERROR']} {self.translator.get('reset.update_macos_platform_uuid_failed', error=str(e))}{Style.RESET_ALL}")
             raise
 
     def reset_machine_ids(self, app_image_path=None):
@@ -561,6 +695,10 @@ class MachineIDResetter:
             # Update system IDs
             self.update_system_ids(new_ids)
 
+            # Modify workbench.desktop.main.js
+            workbench_path = get_workbench_cursor_path(self.translator)
+            modify_workbench_js(workbench_path, self.translator)
+
             # Check Cursor version and perform corresponding actions
             print(f"{Fore.CYAN}{EMOJI['INFO']} {self.translator.get('reset.checking_cursor_version')}...{Style.RESET_ALL}")
             greater_than_0_45 = check_cursor_version(self.translator, extracted_dir)  # Pass extracted_dir here
@@ -610,7 +748,46 @@ class MachineIDResetter:
                 except Exception as e:
                     print(f"{Fore.YELLOW}{EMOJI['INFO']} {self.translator.get('reset.cleanup_error', error=str(e))}{Style.RESET_ALL}")
 
-def run(translator=None, app_image_path=None):
+    def update_machine_id_file(self, machine_id: str) -> bool:
+        """
+        Update machineId file with new machine_id
+        Args:
+            machine_id (str): New machine ID to write
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            # Get the machineId file path
+            machine_id_path = get_cursor_machine_id_path()
+            
+            # Create directory if it doesn't exist
+            os.makedirs(os.path.dirname(machine_id_path), exist_ok=True)
+
+            # Create backup if file exists
+            if os.path.exists(machine_id_path):
+                backup_path = machine_id_path + ".backup"
+                try:
+                    shutil.copy2(machine_id_path, backup_path)
+                    print(f"{Fore.GREEN}{EMOJI['INFO']} {self.translator.get('reset.backup_created', path=backup_path) if self.translator else f'Backup created at: {backup_path}'}{Style.RESET_ALL}")
+                except Exception as e:
+                    print(f"{Fore.YELLOW}{EMOJI['INFO']} {self.translator.get('reset.backup_creation_failed', error=str(e)) if self.translator else f'Could not create backup: {str(e)}'}{Style.RESET_ALL}")
+
+            # Write new machine ID to file
+            with open(machine_id_path, "w", encoding="utf-8") as f:
+                f.write(machine_id)
+
+            print(f"{Fore.GREEN}{EMOJI['SUCCESS']} {self.translator.get('reset.update_success') if self.translator else 'Successfully updated machineId file'}{Style.RESET_ALL}")
+            return True
+
+        except Exception as e:
+            error_msg = f"Failed to update machineId file: {str(e)}"
+            if self.translator:
+                error_msg = self.translator.get('reset.update_failed', error=str(e))
+            print(f"{Fore.RED}{EMOJI['ERROR']} {error_msg}{Style.RESET_ALL}")
+            return False
+
+
+def run(translator=None):
     """Convenient function for directly calling the reset function"""
     print(f"\n{Fore.CYAN}{'='*50}{Style.RESET_ALL}")
     print(f"{Fore.CYAN}{EMOJI['RESET']} {translator.get('reset.title')}{Style.RESET_ALL}")
