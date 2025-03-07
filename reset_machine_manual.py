@@ -32,7 +32,7 @@ def get_cursor_paths(translator=None, appimage_dir=None) -> Tuple[str, str]:
     # If we're using an extracted AppImage directory, use that instead of system paths
     if appimage_dir and system == "Linux":
         # AppImage structure - paths are relative to the extracted directory
-        app_dir = os.path.join(appimage_dir, "usr", "share", "cursor", "resources", "app")
+        app_dir = os.path.join(appimage_dir, "resources", "app")
         return (
             os.path.join(app_dir, "package.json"),
             os.path.join(app_dir, "out", "main.js")
@@ -52,7 +52,7 @@ def get_cursor_paths(translator=None, appimage_dir=None) -> Tuple[str, str]:
             "main": "out/main.js",
         },
         "Linux": {
-            "bases": ["/opt/Cursor/resources/app", "/usr/share/cursor/resources/app"],
+            "bases": ["/resources/app"], # Relative to extracted AppImage directory
             "package": "package.json",
             "main": "out/main.js",
         },

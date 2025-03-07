@@ -42,6 +42,7 @@
         "saving_json": "Saving New Config to JSON",
         "success": "Machine ID Reset Successfully",
         "new_id": "New Machine ID",
+        "check_version_failed": "Failed to Check Cursor Version: {error}",
         "permission_error": "Permission Error: {error}",
         "run_as_admin": "Please Try Running This Program as Administrator",
         "process_error": "Reset Process Error: {error}",
