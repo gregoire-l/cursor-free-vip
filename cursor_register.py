@@ -10,10 +10,10 @@ from reset_machine_manual import MachineIDResetter
 os.environ["PYTHONVERBOSE"] = "0"
 os.environ["PYINSTALLER_VERBOSE"] = "0"
 
-# 初始化colorama
+# Initialize colorama
 init()
 
-# 定义emoji常量
+# Define emoji constants
 EMOJI = {
     'START': '🚀',
     'FORM': '📝',
@@ -33,7 +33,7 @@ EMOJI = {
 class CursorRegistration:
     def __init__(self, translator=None):
         self.translator = translator
-        # 设置为显示模式
+        # Set to display mode
         os.environ['BROWSER_HEADLESS'] = 'False'
         self.browser_manager = BrowserManager()
         self.browser = None
@@ -47,38 +47,49 @@ class CursorRegistration:
         
         # 账号信息
         self.password = self._generate_password()
-        self.first_name = self._generate_name()
-        self.last_name = self._generate_name()
+        # Generate first name and last name separately
+        first_name = random.choice([
+            "James", "John", "Robert", "Michael", "William", "David", "Joseph", "Thomas",
+            "Emma", "Olivia", "Ava", "Isabella", "Sophia", "Mia", "Charlotte", "Amelia",
+            "Liam", "Noah", "Oliver", "Elijah", "Lucas", "Mason", "Logan", "Alexander"
+        ])
+        self.last_name = random.choice([
+            "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis",
+            "Anderson", "Wilson", "Taylor", "Thomas", "Moore", "Martin", "Jackson", "Lee",
+            "Thompson", "White", "Harris", "Clark", "Lewis", "Walker", "Hall", "Young"
+        ])
+        
+        # Modify first letter of first name
+        new_first_letter = random.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+        self.first_name = new_first_letter + first_name[1:]
+        
+        print(f"\n{Fore.CYAN}{EMOJI['PASSWORD']} {self.translator.get('register.password')}: {self.password} {Style.RESET_ALL}")
+        print(f"{Fore.CYAN}{EMOJI['FORM']} {self.translator.get('register.first_name')}: {self.first_name} {Style.RESET_ALL}")
+        print(f"{Fore.CYAN}{EMOJI['FORM']} {self.translator.get('register.last_name')}: {self.last_name} {Style.RESET_ALL}")
 
     def _generate_password(self, length=12):
         """Generate Random Password"""
         chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"
         return ''.join(random.choices(chars, k=length))
 
-    def _generate_name(self, length=6):
-        """Generate Random Name"""
-        first_letter = random.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-        rest_letters = ''.join(random.choices("abcdefghijklmnopqrstuvwxyz", k=length-1))
-        return first_letter + rest_letters
-
     def setup_email(self):
-        """设置邮箱"""
+        """Setup Email"""
         try:
             print(f"{Fore.CYAN}{EMOJI['START']} {self.translator.get('register.browser_start')}...{Style.RESET_ALL}")
             
-            # 使用 new_tempemail 创建临时邮箱，传入 translator
+            # Create a temporary email using new_tempemail, passing translator
             from new_tempemail import NewTempEmail
-            self.temp_email = NewTempEmail(self.translator)  # 传入 translator
+            self.temp_email = NewTempEmail(self.translator)  # Pass translator
             
-            # 创建临时邮箱
+            # Create a temporary email
             email_address = self.temp_email.create_email()
             if not email_address:
                 print(f"{Fore.RED}{EMOJI['ERROR']} {self.translator.get('register.email_create_failed')}{Style.RESET_ALL}")
                 return False
             
-            # 保存邮箱地址
+            # Save email address
             self.email_address = email_address
-            self.email_tab = self.temp_email  # 传递 NewTempEmail 实例
+            self.email_tab = self.temp_email  # Pass NewTempEmail instance
             
             return True
             
@@ -92,10 +103,10 @@ class CursorRegistration:
         try:
             print(f"{Fore.CYAN}{EMOJI['START']} {self.translator.get('register.register_start')}...{Style.RESET_ALL}")
             
-            # 直接使用 new_signup.py 进行注册
+            # Directly use new_signup.py to sign up
             from new_signup import main as new_signup_main
             
-            # 执行新的注册流程，传入 translator
+            # Execute the new registration process, passing translator
             result, browser_tab = new_signup_main(
                 email=self.email_address,
                 password=self.password,
@@ -107,11 +118,11 @@ class CursorRegistration:
             )
             
             if result:
-                # 使用返回的浏览器实例获取账户信息
-                self.signup_tab = browser_tab  # 保存浏览器实例
+                # Use the returned browser instance to get account information
+                self.signup_tab = browser_tab  # Save browser instance
                 success = self._get_account_info()
                 
-                # 获取信息后关闭浏览器
+                # Close browser after getting information
                 if browser_tab:
                     try:
                         browser_tab.quit()
@@ -126,7 +137,7 @@ class CursorRegistration:
             print(f"{Fore.RED}{EMOJI['ERROR']} {self.translator.get('register.register_process_error', error=str(e))}{Style.RESET_ALL}")
             return False
         finally:
-            # 确保在任何情况下都关闭浏览器
+            # Ensure browser is closed in any case
             if browser_tab:
                 try:
                     browser_tab.quit()
@@ -134,7 +145,7 @@ class CursorRegistration:
                     pass
                 
     def _get_account_info(self):
-        """获取账户信息和 Token"""
+        """Get Account Information and Token"""
         try:
             self.signup_tab.get(self.settings_url)
             time.sleep(2)
@@ -149,6 +160,7 @@ class CursorRegistration:
             if usage_ele:
                 total_usage = usage_ele.text.split("/")[-1].strip()
 
+            print(f"Total Usage: {total_usage}\n")
             print(f"{Fore.CYAN}{EMOJI['WAIT']} {self.translator.get('register.get_token')}...{Style.RESET_ALL}")
             max_attempts = 30
             retry_interval = 2
@@ -185,7 +197,7 @@ class CursorRegistration:
             return False
 
     def _save_account_info(self, token, total_usage):
-        """保存账户信息到文件"""
+        """Save Account Information to File"""
         try:
             # 先更新认证信息
             print(f"{Fore.CYAN}{EMOJI['KEY']} {self.translator.get('register.update_cursor_auth_info')}...{Style.RESET_ALL}")
@@ -200,7 +212,7 @@ class CursorRegistration:
             if not resetter.reset_machine_ids(self.app_image_path):  # Pass the app_image_path parameter
                 raise Exception("Failed to reset machine ID")
             
-            # 保存账户信息到文件
+            # Save account information to file
             with open('cursor_accounts.txt', 'a', encoding='utf-8') as f:
                 f.write(f"\n{'='*50}\n")
                 f.write(f"Email: {self.email_address}\n")
@@ -217,7 +229,7 @@ class CursorRegistration:
             return False
 
     def start(self):
-        """启动注册流程"""
+        """Start Registration Process"""
         try:
             if self.setup_email():
                 if self.register_cursor():
@@ -225,7 +237,7 @@ class CursorRegistration:
                     return True
             return False
         finally:
-            # 关闭邮箱标签页
+            # Close email tab
             if hasattr(self, 'temp_email'):
                 try:
                     self.temp_email.close()
@@ -233,7 +245,7 @@ class CursorRegistration:
                     pass
 
     def update_cursor_auth(self, email=None, access_token=None, refresh_token=None):
-        """更新Cursor的认证信息的便捷函数"""
+        """Update Cursor Auth Info"""
         auth_manager = CursorAuth(translator=self.translator)
         return auth_manager.update_auth(email, access_token, refresh_token)
 

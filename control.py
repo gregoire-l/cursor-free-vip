@@ -45,65 +45,6 @@ class BrowserControl:
             print(f"{Fore.RED}{EMOJI['ERROR']} {self.translator.get('control.create_new_tab_failed', error=str(e))}{Style.RESET_ALL}")
             return None
 
-    def switch_to_tab(self, browser):
-        """切换到指定浏览器窗口"""
-        try:
-            self.browser = browser
-            print(f"{Fore.GREEN}{EMOJI['SUCCESS']} {self.translator.get('control.switch_tab_success')}{Style.RESET_ALL}")
-            return True
-        except Exception as e:  
-            print(f"{Fore.RED}{EMOJI['ERROR']} {self.translator.get('control.switch_tab_failed', error=str(e))}{Style.RESET_ALL}")
-            return False
-
-    def get_current_tab(self):
-        """获取当前标签页"""
-        return self.browser
-    
-    def wait_for_page_load(self, seconds=2):
-        """等待页面加载"""
-        time.sleep(seconds)
-
-    def navigate_to(self, url):
-        """导航到指定URL"""
-        try:
-            print(f"{Fore.CYAN}{EMOJI['INFO']} {self.translator.get('control.navigate_to', url=url)}...{Style.RESET_ALL}")
-            self.browser.get(url)
-            self.wait_for_page_load()
-            return True
-        except Exception as e:
-            print(f"{Fore.RED}{EMOJI['ERROR']} {self.translator.get('control.browser_error', error=str(e))}{Style.RESET_ALL}")
-            return False
-
-    def get_verification_code(self):
-        """从邮件中获取验证码"""
-        try:
-            # 尝试所有可能的样式组合
-            selectors = [
-                # 新样式
-                'xpath://div[contains(@style, "font-family:-apple-system") and contains(@style, "font-size:28px") and contains(@style, "letter-spacing:2px") and contains(@style, "color:#202020")]',
-                # 带行高的样式
-                'xpath://div[contains(@style, "font-size:28px") and contains(@style, "letter-spacing:2px") and contains(@style, "line-height:30px")]',
-                # rgba 颜色样式
-                'xpath://div[contains(@style, "font-size: 28px") and contains(@style, "letter-spacing: 2px") and contains(@style, "color: rgba(32, 32, 32, 1)")]',
-                # 宽松样式
-                'xpath://div[contains(@style, "font-size:28px") and contains(@style, "letter-spacing:2px")]'
-            ]
-            
-            # 依次尝试每个选择器
-            for selector in selectors:
-                code_div = self.browser.ele(selector)
-                if code_div:
-                    verification_code = code_div.text.strip()
-                    if verification_code.isdigit() and len(verification_code) == 6:
-                        print(f"{Fore.GREEN}{EMOJI['SUCCESS']} {self.translator.get('control.found_verification_code')}: {verification_code}{Style.RESET_ALL}")
-                        return verification_code
-                    
-            print(f"{Fore.YELLOW}{EMOJI['ERROR']} {self.translator.get('control.no_valid_verification_code')}{Style.RESET_ALL}")
-            return None
-            
-        except Exception as e:
-            print(f"{Fore.RED}{EMOJI['ERROR']} {self.translator.get('control.get_verification_code_error', error=str(e))}{Style.RESET_ALL}")
-            return None
 
     def fill_verification_code(self, code):
         """填写验证码"""

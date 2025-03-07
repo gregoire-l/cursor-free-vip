@@ -7,7 +7,7 @@ import requests
 import random
 import string
 
-# 初始化 colorama
+# Initialize colorama
 init()
 
 class NewTempEmail:
@@ -34,7 +34,7 @@ class NewTempEmail:
                 # Split text and remove empty lines
                 domains = [line.strip() for line in response.text.split('\n') if line.strip()]
                 if self.translator:
-                    print(f"{Fore.CYAN}ℹ️ {self.translator.get('email.blocked_domains_loaded', count=len(domains))}{Style.RESET_ALL}")
+                    print(f"{Fore.CYAN}ℹ️  {self.translator.get('email.blocked_domains_loaded', count=len(domains))}{Style.RESET_ALL}")
                 else:
                     print(f"{Fore.CYAN}ℹ️ 已加载 {len(domains)} 个被屏蔽的域名{Style.RESET_ALL}")
                 return domains
@@ -66,153 +66,179 @@ class NewTempEmail:
         return filtered_domains
         
     def _generate_credentials(self):
-        """生成随机用户名和密码"""
+        """generate random username and password"""
         username = ''.join(random.choices(string.ascii_lowercase + string.digits, k=10))
         password = ''.join(random.choices(string.ascii_letters + string.digits + string.punctuation, k=12))
         return username, password
         
     def create_email(self):
-        """创建临时邮箱"""
-        try:
-            if self.translator:
-                print(f"{Fore.CYAN}ℹ️ {self.translator.get('email.visiting_site').replace('mail.tm', self.selected_service['name'])}{Style.RESET_ALL}")
-            else:
-                print(f"{Fore.CYAN}ℹ️ 正在访问 {self.selected_service['name']}...{Style.RESET_ALL}")
-            
-            # 获取可用域名列表
+        """create temporary email"""
+        max_retries = 3  # Maximum number of retries
+        attempt = 0  # Current attempt count
+        
+        while attempt < max_retries:
+            attempt += 1
             try:
-                domains_response = requests.get(f"{self.api_url}/domains", timeout=10)
-                if domains_response.status_code != 200:
-                    print(f"{Fore.RED}❌ {self.translator.get('email.domains_list_error', error=domains_response.status_code)}{Style.RESET_ALL}")
-                    print(f"{Fore.RED}❌ {self.translator.get('email.domains_list_error', error=domains_response.text)}{Style.RESET_ALL}")
-                    raise Exception(f"{self.translator.get('email.failed_to_get_available_domains') if self.translator else 'Failed to get available domains'}")
-                    
-                domains = domains_response.json()["hydra:member"]
-                print(f"{Fore.CYAN}ℹ️ {self.translator.get('email.available_domains_loaded', count=len(domains))}{Style.RESET_ALL}")
-                
-                if not domains:
-                    raise Exception(f"{self.translator.get('email.no_available_domains') if self.translator else '没有可用域名'}")
-            except Exception as e:
-                print(f"{Fore.RED}❌ 获取域名列表时出错: {str(e)}{Style.RESET_ALL}")
-                raise
-                
-            # 排除被屏蔽的域名
-            try:
-                filtered_domains = self.exclude_blocked_domains(domains)
                 if self.translator:
-                    print(f"{Fore.CYAN}ℹ️ {self.translator.get('email.domains_filtered', count=len(filtered_domains))}{Style.RESET_ALL}")
+                    print(f"{Fore.CYAN}ℹ️  {self.translator.get('email.visiting_site').replace('mail.tm', self.selected_service['name'])}{Style.RESET_ALL}")
                 else:
-                    print(f"{Fore.CYAN}ℹ️ 过滤后剩余 {len(filtered_domains)} 个可用域名{Style.RESET_ALL}")
-                
-                if not filtered_domains:
+                    print(f"{Fore.CYAN}ℹ️ 正在访问 {self.selected_service['name']}...{Style.RESET_ALL}")
+
+                # Get available domain list
+                try:
+                    domains_response = requests.get(f"{self.api_url}/domains", timeout=10)
+                    if domains_response.status_code != 200:
+                        print(f"{Fore.RED}❌ {self.translator.get('email.domains_list_error', error=domains_response.status_code)}{Style.RESET_ALL}")
+                        print(f"{Fore.RED}❌ {self.translator.get('email.domains_list_error', error=domains_response.text)}{Style.RESET_ALL}")
+                        raise Exception(f"{self.translator.get('email.failed_to_get_available_domains') if self.translator else 'Failed to get available domains'}")
+
+                    domains = domains_response.json()["hydra:member"]
+                    print(f"{Fore.CYAN}ℹ️  {self.translator.get('email.available_domains_loaded', count=len(domains))}{Style.RESET_ALL}")
+
+                    if not domains:
+                        raise Exception(f"{self.translator.get('email.no_available_domains') if self.translator else '没有可用域名'}")
+                except Exception as e:
+                    print(f"{Fore.RED}❌ 获取域名列表时出错: {str(e)}{Style.RESET_ALL}")
+                    raise
+
+                # Exclude blocked domains
+                try:
+                    filtered_domains = self.exclude_blocked_domains(domains)
                     if self.translator:
-                        print(f"{Fore.RED}❌ {self.translator.get('email.all_domains_blocked')}{Style.RESET_ALL}")
+                        print(f"{Fore.CYAN}ℹ️  {self.translator.get('email.domains_filtered', count=len(filtered_domains))}{Style.RESET_ALL}")
                     else:
-                        print(f"{Fore.RED}❌ 所有域名都被屏蔽了，尝试切换服务{Style.RESET_ALL}")
-                    
-                    # 切换到另一个服务
-                    for service in self.services:
-                        if service["api_url"] != self.api_url:
-                            self.selected_service = service
-                            self.api_url = service["api_url"]
-                            if self.translator:
-                                print(f"{Fore.CYAN}ℹ️ {self.translator.get('email.switching_service', service=service['name'])}{Style.RESET_ALL}")
-                            else:
-                                print(f"{Fore.CYAN}ℹ️ 切换到 {service['name']} 服务{Style.RESET_ALL}")
-                            return self.create_email()  # 递归调用
-                    
-                    raise Exception(f"{self.translator.get('email.no_available_domains_after_filtering') if self.translator else '过滤后没有可用域名'}")
+                        print(f"{Fore.CYAN}ℹ️ 过滤后剩余 {len(filtered_domains)} 个可用域名{Style.RESET_ALL}")
+
+                    if not filtered_domains:
+                        if self.translator:
+                            print(f"{Fore.RED}❌ {self.translator.get('email.all_domains_blocked')}{Style.RESET_ALL}")
+                        else:
+                            print(f"{Fore.RED}❌ 所有域名都被屏蔽了，尝试切换服务{Style.RESET_ALL}")
+
+                        # Switch to another service
+                        for service in self.services:
+                            if service["api_url"] != self.api_url:
+                                self.selected_service = service
+                                self.api_url = service["api_url"]
+                                if self.translator:
+                                    print(f"{Fore.CYAN}ℹ️  {self.translator.get('email.switching_service', service=service['name'])}{Style.RESET_ALL}")
+                                else:
+                                    print(f"{Fore.CYAN}ℹ️ 切换到 {service['name']} 服务{Style.RESET_ALL}")
+                                return self.create_email()  # Recursively call
+
+                        raise Exception(f"{self.translator.get('email.no_available_domains_after_filtering') if self.translator else '过滤后没有可用域名'}")
+                except Exception as e:
+                    print(f"{Fore.RED}❌ 过滤域名时出错: {str(e)}{Style.RESET_ALL}")
+                    raise
+
+                # Generate random username and password
+                try:
+                    username, password = self._generate_credentials()
+                    self.password = password
+
+                    # Create email account
+                    selected_domain = filtered_domains[0]['domain']
+                    email = f"{username}@{selected_domain}"
+
+                    if self.translator:
+                        print(f"{Fore.CYAN}ℹ️  {self.translator.get('email.trying_to_create_email', email=email)}{Style.RESET_ALL}")
+                    else:
+                        print(f"{Fore.CYAN}ℹ️ 尝试创建邮箱: {email}{Style.RESET_ALL}")
+
+                    account_data = {
+                        "address": email,
+                        "password": password
+                    }
+                except Exception as e:
+                    print(f"{Fore.RED}❌ 生成凭据时出错: {str(e)}{Style.RESET_ALL}")
+                    raise
+
+                # Create account
+                try:
+                    create_response = requests.post(f"{self.api_url}/accounts", json=account_data, timeout=15)
+
+                    if create_response.status_code != 201:
+                        if self.translator:
+                            print(f"{Fore.RED}❌ {self.translator.get('email.failed_to_create_account', error=create_response.status_code)}{Style.RESET_ALL}")
+                        else:
+                            print(f"{Fore.RED}❌ 创建账户失败: 状态码 {create_response.status_code}{Style.RESET_ALL}")
+                        if self.translator:
+                            print(f"{Fore.RED}❌ {self.translator.get('email.failed_to_create_account', error=create_response.text)}{Style.RESET_ALL}")
+                        else:
+                            print(f"{Fore.RED}❌ 响应内容: {create_response.text}{Style.RESET_ALL}")
+
+                        # If it's a domain problem, try the next available domain
+                        if len(filtered_domains) > 1 and ("domain" in create_response.text.lower() or "address" in create_response.text.lower()):
+                            print(f"{Fore.YELLOW}⚠️ 尝试使用下一个可用域名...{Style.RESET_ALL}")
+                            # Add current domain to blocked list
+                            if selected_domain not in self.blocked_domains:
+                                self.blocked_domains.append(selected_domain)
+                            # Recursively call yourself
+                            return self.create_email()
+
+                        raise Exception(f"{self.translator.get('email.failed_to_create_account') if self.translator else '创建账户失败'}")
+                except Exception as e:
+                    if self.translator:
+                        print(f"{Fore.RED}❌ {self.translator.get('email.failed_to_create_account', error=str(e))}{Style.RESET_ALL}")
+                    else:
+                        print(f"{Fore.RED}❌ 创建账户时出错: {str(e)}{Style.RESET_ALL}")
+                    raise
+
+                # Get access token
+                try:
+                    token_data = {
+                        "address": email,
+                        "password": password
+                    }
+
+                    token_response = requests.post(f"{self.api_url}/token", json=token_data, timeout=10)
+                    if token_response.status_code != 200:
+                        if self.translator:
+                            print(f"{Fore.RED}❌ {self.translator.get('email.failed_to_get_access_token', error=token_response.status_code)}{Style.RESET_ALL}")
+                        else:
+                            print(f"{Fore.RED}❌ 获取令牌失败: 状态码 {token_response.status_code}{Style.RESET_ALL}")
+                        if self.translator:
+                            print(f"{Fore.RED}❌ {self.translator.get('email.failed_to_get_access_token', error=token_response.text)}{Style.RESET_ALL}")
+                        else:
+                            print(f"{Fore.RED}❌ 响应内容: {token_response.text}{Style.RESET_ALL}")
+                        raise Exception(f"{self.translator.get('email.failed_to_get_access_token') if self.translator else '获取访问令牌失败'}")
+
+                    self.token = token_response.json()["token"]
+                    self.email = email
+                except Exception as e:
+                    print(f"{Fore.RED}❌ 获取令牌时出错: {str(e)}{Style.RESET_ALL}")
+                    raise
+
+                if self.translator:
+                    print(f"{Fore.GREEN}✅ {self.translator.get('email.create_success')}: {email}{Style.RESET_ALL}")
+                else:
+                    print(f"{Fore.GREEN}✅ 创建邮箱成功: {email}{Style.RESET_ALL}")
+                return email
+
             except Exception as e:
-                print(f"{Fore.RED}❌ 过滤域名时出错: {str(e)}{Style.RESET_ALL}")
-                raise
-                
-            # 生成随机用户名和密码
-            try:
-                username, password = self._generate_credentials()
-                self.password = password
-                
-                # 创建邮箱账户
-                selected_domain = filtered_domains[0]['domain']
-                email = f"{username}@{selected_domain}"
-                
-                print(f"{Fore.CYAN}ℹ️ 尝试创建邮箱: {email}{Style.RESET_ALL}")
-                
-                account_data = {
-                    "address": email,
-                    "password": password
-                }
-            except Exception as e:
-                print(f"{Fore.RED}❌ 生成凭据时出错: {str(e)}{Style.RESET_ALL}")
-                raise
-            
-            # 创建账户
-            try:
-                create_response = requests.post(f"{self.api_url}/accounts", json=account_data, timeout=15)
-                
-                if create_response.status_code != 201:
-                    print(f"{Fore.RED}❌ 创建账户失败: 状态码 {create_response.status_code}{Style.RESET_ALL}")
-                    print(f"{Fore.RED}❌ 响应内容: {create_response.text}{Style.RESET_ALL}")
-                    
-                    # 如果是域名问题，尝试下一个域名
-                    if len(filtered_domains) > 1 and ("domain" in create_response.text.lower() or "address" in create_response.text.lower()):
-                        print(f"{Fore.YELLOW}⚠️ 尝试使用下一个可用域名...{Style.RESET_ALL}")
-                        # 将当前域名添加到屏蔽列表
-                        if selected_domain not in self.blocked_domains:
-                            self.blocked_domains.append(selected_domain)
-                        # 递归调用自己
-                        return self.create_email()
-                        
-                    raise Exception(f"{self.translator.get('email.failed_to_create_account') if self.translator else '创建账户失败'}")
-            except Exception as e:
-                print(f"{Fore.RED}❌ 创建账户时出错: {str(e)}{Style.RESET_ALL}")
-                raise
-                
-            # 获取访问令牌
-            try:
-                token_data = {
-                    "address": email,
-                    "password": password
-                }
-                
-                token_response = requests.post(f"{self.api_url}/token", json=token_data, timeout=10)
-                if token_response.status_code != 200:
-                    print(f"{Fore.RED}❌ 获取令牌失败: 状态码 {token_response.status_code}{Style.RESET_ALL}")
-                    print(f"{Fore.RED}❌ 响应内容: {token_response.text}{Style.RESET_ALL}")
-                    raise Exception(f"{self.translator.get('email.failed_to_get_access_token') if self.translator else '获取访问令牌失败'}")
-                    
-                self.token = token_response.json()["token"]
-                self.email = email
-            except Exception as e:
-                print(f"{Fore.RED}❌ 获取令牌时出错: {str(e)}{Style.RESET_ALL}")
-                raise
-                
-            if self.translator:
-                print(f"{Fore.GREEN}✅ {self.translator.get('email.create_success')}: {email}{Style.RESET_ALL}")
-            else:
-                print(f"{Fore.GREEN}✅ 创建邮箱成功: {email}{Style.RESET_ALL}")
-            return email
-            
-        except Exception as e:
-            if self.translator:
-                print(f"{Fore.RED}❌ {self.translator.get('email.create_error')}: {str(e)}{Style.RESET_ALL}")
-            else:
-                print(f"{Fore.RED}❌ 创建邮箱出错: {str(e)}{Style.RESET_ALL}")
-            return None
-            
+                if attempt < max_retries:
+                    print(f"{Fore.YELLOW}⚠️ 尝试重新创建邮箱... (尝试 {attempt}/{max_retries}){Style.RESET_ALL}")
+                else:
+                    if self.translator:
+                        print(f"{Fore.RED}❌ {self.translator.get('email.create_error')}: {str(e)}{Style.RESET_ALL}")
+                    else:
+                        print(f"{Fore.RED}❌ 创建邮箱出错: {str(e)}{Style.RESET_ALL}")
+                return None
+
     def close(self):
-        """关闭浏览器"""
+        """close browser"""
         if self.page:
             self.page.quit()
 
     def refresh_inbox(self):
-        """刷新邮箱"""
+        """refresh inbox"""
         try:
             if self.translator:
                 print(f"{Fore.CYAN}🔄 {self.translator.get('email.refreshing')}{Style.RESET_ALL}")
             else:
                 print(f"{Fore.CYAN}🔄 正在刷新邮箱...{Style.RESET_ALL}")
             
-            # 使用 API 获取最新邮件
+            # Use API to get latest email
             headers = {"Authorization": f"Bearer {self.token}"}
             response = requests.get(f"{self.api_url}/messages", headers=headers)
             
@@ -239,7 +265,7 @@ class NewTempEmail:
     def check_for_cursor_email(self):
         """检查是否有 Cursor 的验证邮件"""
         try:
-            # 使用 API 获取邮件列表
+            # Use API to get email list
             headers = {"Authorization": f"Bearer {self.token}"}
             response = requests.get(f"{self.api_url}/messages", headers=headers)
             
@@ -247,7 +273,7 @@ class NewTempEmail:
                 messages = response.json()["hydra:member"]
                 for message in messages:
                     if message["from"]["address"] == "no-reply@cursor.sh" and "Verify your email address" in message["subject"]:
-                        # 获取邮件内容
+                        # Get email content
                         message_id = message["id"]
                         message_response = requests.get(f"{self.api_url}/messages/{message_id}", headers=headers)
                         if message_response.status_code == 200:
@@ -271,9 +297,9 @@ class NewTempEmail:
             return False
 
     def get_verification_code(self):
-        """获取验证码"""
+        """get verification code"""
         try:
-            # 使用 API 获取邮件列表
+            # Use API to get email list
             headers = {"Authorization": f"Bearer {self.token}"}
             response = requests.get(f"{self.api_url}/messages", headers=headers)
             
@@ -281,14 +307,14 @@ class NewTempEmail:
                 messages = response.json()["hydra:member"]
                 for message in messages:
                     if message["from"]["address"] == "no-reply@cursor.sh" and "Verify your email address" in message["subject"]:
-                        # 获取邮件内容
+                        # Get email content
                         message_id = message["id"]
                         message_response = requests.get(f"{self.api_url}/messages/{message_id}", headers=headers)
                         
                         if message_response.status_code == 200:
-                            # 从邮件内容中提取验证码
+                            # Extract verification code from email content
                             email_content = message_response.json()["text"]
-                            # 查找6位数字验证码
+                            # Find 6-digit verification code
                             import re
                             code_match = re.search(r'\b\d{6}\b', email_content)
                             
@@ -324,7 +350,7 @@ def main(translator=None):
             else:
                 print(f"\n{Fore.CYAN}📧 临时邮箱地址: {email}{Style.RESET_ALL}")
             
-            # 测试刷新功能
+            # Test refresh function
             while True:
                 if translator:
                     choice = input(f"\n{translator.get('email.refresh_prompt')}: ").lower()

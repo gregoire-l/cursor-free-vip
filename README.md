@@ -12,7 +12,7 @@
 [![Download](https://img.shields.io/github/downloads/yeongpin/cursor-free-vip/total?style=flat-square&logo=github&color=52c41a)](https://github.com/yeongpin/cursor-free-vip/releases/latest)
 
 </p>
-<h4>Support Latest 0.46.3 Version | 支持最新0.46.3本</h4>
+<h4>Support Latest 0.46.9 Version | 支持最新0.46.9本</h4>
 
 This is a tool to automatically register , support Windows and macOS systems, complete Auth verification, and reset Cursor's configuration.
 
@@ -86,6 +86,21 @@ irm https://raw.githubusercontent.com/yeongpin/cursor-free-vip/main/scripts/rese
 
 ## ❗ Note | 注意事項
 
+📝 Config | 文件配置
+`Win / Macos / Linux Path | 路徑 [Documents/.cursor-free-vip/config.ini]`
+
+```
+[Chrome]
+# Default Google Chrome Path | 默認Google Chrome 遊覽器路徑
+chromepath = C:\Program Files\Google/Chrome/Application/chrome.exe
+
+[Turnstile]
+# Handle Tuenstile Wait Time | 等待人機驗證時間
+handle_turnstile_time = 2
+# Handle Tuenstile Wait Random Time (must merge 1-3 or 1,3) | 等待人機驗證隨機時間（必須是 1-3 或者 1,3 這樣的組合）
+handle_turnstile_random_time = 1-3
+```
+
 * Use administrator to run the script <br>請使用管理員身份運行腳本
 
 * Confirm that Cursor is closed before running the script <br>請確保在運行腳本前已經關閉 Cursor<br>
@@ -98,9 +113,9 @@ irm https://raw.githubusercontent.com/yeongpin/cursor-free-vip/main/scripts/rese
 
 ## 🚨 Common Issues | 常見問題
 
-|如果遇到權限問題，請確保：|If you encounter permission issues, please ensure:|
+|如果遇到權限問題，請確保：| 此腳本以管理員身份運行 |
 |:---:|:---:|
-| 此腳本以管理員身份運行 | This script is run with administrator privileges |
+|If you encounter permission issues, please ensure: | This script is run with administrator privileges |
 
 
 
@@ -108,6 +123,11 @@ irm https://raw.githubusercontent.com/yeongpin/cursor-free-vip/main/scripts/rese
 
 歡迎提交 Issue 和 Pull Request！
 
+
+<a href="https://github.com/yeongpin/cursor-free-vip/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=yeongpin/cursor-free-vip" />
+</a>
+<br /><br />
 
 
 ## 📩 Disclaimer | 免責聲明
