@@ -14,7 +14,8 @@
         "press_enter": "Press Enter to Exit",
         "disable_auto_update": "Disable Cursor Auto-Update",
         "app_image_info": "Tip: You can launch this tool with --appImage flag to patch AppImage directly",
-        "app_image_detected": "AppImage detected: {path}"
+        "app_image_detected": "AppImage detected: {path}",
+        "show_machine_ids": "Show Machine IDs and Reset Information"
     },
     "languages": {
         "en": "English",
@@ -276,5 +277,32 @@
         "up_to_date": "You are using the latest version.",
         "check_failed": "Failed to check for updates: {error}",
         "continue_anyway": "Continuing with current version..."
+    },
+    "show_ids": {
+        "title": "Machine IDs and Reset Information",
+        "file_paths": "File Paths That Can Be Modified",
+        "config_path": "JSON Config Path",
+        "sqlite_path": "SQLite Database Path",
+        "machine_id_path": "Machine ID File Path",
+        "workbench_path": "Workbench JS Path",
+        "json_config_ids": "Machine IDs in JSON Config",
+        "sqlite_ids": "Machine IDs in SQLite Database",
+        "system_ids": "System Machine IDs",
+        "machine_id_file": "Machine ID File Content",
+        "press_enter": "Press Enter to return to menu",
+        "config_not_found": "Config File Not Found",
+        "sqlite_not_found": "SQLite Database Not Found",
+        "machine_id_not_found": "Machine ID File Not Found",
+        "json_error": "Error reading JSON config: {error}",
+        "sqlite_error": "Error reading SQLite database: {error}",
+        "machine_id_error": "Error reading Machine ID file: {error}",
+        "system_ids_error": "Error reading system IDs: {error}",
+        "windows_guid_error": "Error reading Windows MachineGuid: {error}",
+        "macos_uuid_info": "macOS Platform UUID (requires root access to view)",
+        "linux_uuid_info": "Linux System ID Information ({os})",
+        "path_error": "Error getting file paths: {error}",
+        "no_sqlite_ids": "No machine IDs found in SQLite database",
+        "no_sqlite_table": "No ItemTable found in SQLite database",
+        "machine_id": "Machine ID"
     }
 }

@@ -12,7 +12,10 @@
         "program_terminated": "程序已被用户终止",
         "error_occurred": "发生错误：{error}，请重试",
         "press_enter": "按回车键退出",
-        "disable_auto_update": "禁用 Cursor 自动更新"
+        "disable_auto_update": "禁用 Cursor 自动更新",
+        "app_image_info": "提示：您可以使用 --appImage 参数直接修补 AppImage",
+        "app_image_detected": "已检测到 AppImage：{path}",
+        "show_machine_ids": "显示机器 ID 和重置信息"
     },
     "languages": {
         "en": "English",
@@ -244,10 +247,37 @@
     },
     "updater": {
         "checking": "检查更新...",
-        "new_version_available": "有新版本可用! (当前版本: {current}, 最新版本: {latest})",
+        "new_version_available": "发现新版本！（当前版本：{current}，最新版本：{latest}）",
         "updating": "正在更新到最新版本。程序将自动重启。",
         "up_to_date": "您使用的是最新版本。",
-        "check_failed": "检查更新失败: {error}",
+        "check_failed": "检查更新失败：{error}",
         "continue_anyway": "继续使用当前版本..."
+    },
+    "show_ids": {
+        "title": "机器 ID 和重置信息",
+        "file_paths": "可能被修改的文件路径",
+        "config_path": "JSON 配置文件路径",
+        "sqlite_path": "SQLite 数据库路径",
+        "machine_id_path": "机器 ID 文件路径",
+        "workbench_path": "Workbench JS 路径",
+        "json_config_ids": "JSON 配置中的机器 ID",
+        "sqlite_ids": "SQLite 数据库中的机器 ID",
+        "system_ids": "系统机器 ID",
+        "machine_id_file": "机器 ID 文件内容",
+        "press_enter": "按回车键返回菜单",
+        "config_not_found": "未找到配置文件",
+        "sqlite_not_found": "未找到 SQLite 数据库",
+        "machine_id_not_found": "未找到机器 ID 文件",
+        "json_error": "读取 JSON 配置时出错：{error}",
+        "sqlite_error": "读取 SQLite 数据库时出错：{error}",
+        "machine_id_error": "读取机器 ID 文件时出错：{error}",
+        "system_ids_error": "读取系统 ID 时出错：{error}",
+        "windows_guid_error": "读取 Windows MachineGuid 时出错：{error}",
+        "macos_uuid_info": "macOS 平台 UUID（需要 root 权限查看）",
+        "linux_uuid_info": "Linux 系统 ID 信息（{os}）",
+        "path_error": "获取文件路径时出错：{error}",
+        "no_sqlite_ids": "SQLite 数据库中未找到机器 ID",
+        "no_sqlite_table": "SQLite 数据库中未找到 ItemTable 表",
+        "machine_id": "机器 ID"
     }
 } 
