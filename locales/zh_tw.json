@@ -15,7 +15,8 @@
         "disable_auto_update": "禁用 Cursor 自動更新",
         "app_image_info": "提示：您可以使用 --appImage 參數直接修補 AppImage",
         "app_image_detected": "已檢測到 AppImage：{path}",
-        "show_machine_ids": "顯示機器 ID 和重置信息"
+        "show_machine_ids": "顯示機器 ID 和重置信息",
+        "patch": "修補 Cursor 應用程序"
     },
     "languages": {
         "en": "English",
@@ -260,5 +261,21 @@
         "no_sqlite_ids": "SQLite 數據庫中未找到機器 ID",
         "no_sqlite_table": "SQLite 數據庫中未找到 ItemTable 表",
         "machine_id": "機器 ID"
+    },
+    "patch": {
+        "title": "Cursor 修補工具",
+        "start_patching": "開始修補 Cursor...",
+        "processing_appimage": "處理 AppImage: {path}",
+        "current_version": "當前 Cursor 版本: {version}",
+        "version_check_failed": "版本檢查失敗: {error}",
+        "version_not_supported": "不支持此版本",
+        "no_appimage_linux": "在 Linux 上，必須提供 AppImage 路徑",
+        "invalid_appimage": "無效的 AppImage 路徑: {path}",
+        "completed": "修補完成",
+        "failed": "修補失敗: {error}",
+        "cleaning_temp_files": "清理臨時文件...",
+        "cleanup_error": "清理時出錯: {error}",
+        "workbench_error": "修改 workbench 時出錯: {error}",
+        "press_enter": "按回車鍵返回菜單..."
     }
-} 
+}

@@ -183,6 +183,7 @@ def print_menu():
     print(f"{Fore.GREEN}5{Style.RESET_ALL}. {EMOJI['LANG']} {translator.get('menu.select_language')}")
     print(f"{Fore.GREEN}6{Style.RESET_ALL}. {EMOJI['UPDATE']} {translator.get('menu.disable_auto_update')}")
     print(f"{Fore.GREEN}7{Style.RESET_ALL}. {EMOJI['INFO']}  {translator.get('menu.show_machine_ids')}")
+    print(f"{Fore.GREEN}8{Style.RESET_ALL}. {EMOJI['FILE']} {translator.get('menu.patch')}")
     print(f"{Fore.YELLOW}{'─' * 40}{Style.RESET_ALL}")
 
 def select_language():
@@ -309,7 +310,7 @@ def main():
     
     while True:
         try:
-            choice = input(f"\n{EMOJI['ARROW']} {Fore.CYAN}{translator.get('menu.input_choice', choices='0-7')}: {Style.RESET_ALL}")
+            choice = input(f"\n{EMOJI['ARROW']} {Fore.CYAN}{translator.get('menu.input_choice', choices='0-8')}: {Style.RESET_ALL}")
 
             if choice == "0":
                 print(f"\n{Fore.YELLOW}{EMOJI['INFO']} {translator.get('menu.exit')}...{Style.RESET_ALL}")
@@ -344,6 +345,10 @@ def main():
             elif choice == "7":
                 import show_machine_ids
                 show_machine_ids.run(translator)
+                print_menu()
+            elif choice == "8":
+                import patch_app
+                patch_app.run(translator, args.appImage)
                 print_menu()
             else:
                 print(f"{Fore.RED}{EMOJI['ERROR']} {translator.get('menu.invalid_choice')}{Style.RESET_ALL}")

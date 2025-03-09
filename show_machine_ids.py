@@ -7,9 +7,8 @@ from colorama import Fore, Style
 
 # Import from reset_machine_manual
 from reset_machine_manual import (
-    get_cursor_machine_id_path,
-    get_workbench_cursor_path,
-    MachineIDResetter,
+    get_machine_id_paths,
+    get_config_paths,
     EMOJI
 )
 
@@ -19,29 +18,26 @@ def show_machine_ids(translator):
     print(f"{Fore.CYAN}{EMOJI['INFO']} {translator.get('show_ids.title')}{Style.RESET_ALL}")
     print(f"{Fore.CYAN}{'='*50}{Style.RESET_ALL}")
     
-    # Get paths using MachineIDResetter
+    # Get paths using helper functions
     try:
-        resetter = MachineIDResetter(translator)
-        db_path = resetter.db_path
-        sql_path = resetter.sqlite_path
-        machine_id_path = get_cursor_machine_id_path(translator)
-        workbench_path = get_workbench_cursor_path(translator)
+        package_path, main_path = get_machine_id_paths(translator)
+        settings_path, sqlite_path = get_config_paths()
     except Exception as e:
         print(f"{Fore.RED}{EMOJI['ERROR']} {translator.get('show_ids.path_error', error=str(e))}{Style.RESET_ALL}")
         raise
     
     # Show file paths
     print(f"\n{Fore.CYAN}{EMOJI['FILE']} {translator.get('show_ids.file_paths')}:{Style.RESET_ALL}")
-    print(f"{Fore.GREEN}1. {translator.get('show_ids.config_path')}: {Style.RESET_ALL}{db_path}")
-    print(f"{Fore.GREEN}2. {translator.get('show_ids.sqlite_path')}: {Style.RESET_ALL}{sql_path}")
-    print(f"{Fore.GREEN}3. {translator.get('show_ids.machine_id_path')}: {Style.RESET_ALL}{machine_id_path}")
-    print(f"{Fore.GREEN}4. {translator.get('show_ids.workbench_path')}: {Style.RESET_ALL}{workbench_path}")
+    print(f"{Fore.GREEN}1. {translator.get('show_ids.config_path')}: {Style.RESET_ALL}{settings_path}")
+    print(f"{Fore.GREEN}2. {translator.get('show_ids.sqlite_path')}: {Style.RESET_ALL}{sqlite_path}")
+    print(f"{Fore.GREEN}3. {translator.get('show_ids.machine_id_path')}: {Style.RESET_ALL}{package_path}")
+    print(f"{Fore.GREEN}4. {translator.get('show_ids.workbench_path')}: {Style.RESET_ALL}{main_path}")
     
     # Show JSON config IDs
     try:
         print(f"\n{Fore.CYAN}{EMOJI['INFO']} {translator.get('show_ids.json_config_ids')}:{Style.RESET_ALL}")
-        if os.path.exists(db_path):
-            with open(db_path, "r", encoding="utf-8") as f:
+        if os.path.exists(settings_path):
+            with open(settings_path, "r", encoding="utf-8") as f:
                 config = json.load(f)
                 
             machine_ids = {
@@ -62,8 +58,8 @@ def show_machine_ids(translator):
     # Show SQLite database IDs
     try:
         print(f"\n{Fore.CYAN}{EMOJI['INFO']} {translator.get('show_ids.sqlite_ids')}:{Style.RESET_ALL}")
-        if os.path.exists(sql_path):
-            conn = sqlite3.connect(sql_path)
+        if os.path.exists(sqlite_path):
+            conn = sqlite3.connect(sqlite_path)
             cursor = conn.cursor()
             
             cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='ItemTable'")
@@ -91,8 +87,8 @@ def show_machine_ids(translator):
     # Show machineId file content
     try:
         print(f"\n{Fore.CYAN}{EMOJI['INFO']} {translator.get('show_ids.machine_id_file')}:{Style.RESET_ALL}")
-        if os.path.exists(machine_id_path):
-            with open(machine_id_path, "r", encoding="utf-8") as f:
+        if os.path.exists(package_path):
+            with open(package_path, "r", encoding="utf-8") as f:
                 machine_id = f.read().strip()
                 print(f"{Fore.GREEN}{translator.get('show_ids.machine_id')}: {Style.RESET_ALL}{machine_id}")
         else:

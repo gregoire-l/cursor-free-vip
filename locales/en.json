@@ -15,7 +15,8 @@
         "disable_auto_update": "Disable Cursor Auto-Update",
         "app_image_info": "Tip: You can launch this tool with --appImage flag to patch AppImage directly",
         "app_image_detected": "AppImage detected: {path}",
-        "show_machine_ids": "Show Machine IDs and Reset Information"
+        "show_machine_ids": "Show Machine IDs and Reset Information",
+        "patch": "Patch Cursor Application"
     },
     "languages": {
         "en": "English",
@@ -304,5 +305,21 @@
         "no_sqlite_ids": "No machine IDs found in SQLite database",
         "no_sqlite_table": "No ItemTable found in SQLite database",
         "machine_id": "Machine ID"
+    },
+    "patch": {
+        "title": "Cursor Patch Tool",
+        "start_patching": "Starting to patch Cursor...",
+        "processing_appimage": "Processing AppImage: {path}",
+        "current_version": "Current Cursor version: {version}",
+        "version_check_failed": "Version check failed: {error}",
+        "version_not_supported": "This version is not supported",
+        "no_appimage_linux": "On Linux, you must provide an AppImage path",
+        "invalid_appimage": "Invalid AppImage path: {path}",
+        "completed": "Patching completed successfully",
+        "failed": "Patching failed: {error}",
+        "cleaning_temp_files": "Cleaning up temporary files...",
+        "cleanup_error": "Error during cleanup: {error}",
+        "workbench_error": "Error modifying workbench: {error}",
+        "press_enter": "Press Enter to return to menu..."
     }
 }

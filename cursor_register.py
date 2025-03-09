@@ -5,7 +5,7 @@ import random
 from browser import BrowserManager
 from control import BrowserControl
 from cursor_auth import CursorAuth
-from reset_machine_manual import MachineIDResetter
+from reset_machine_manual import reset_machine_id
 
 os.environ["PYTHONVERBOSE"] = "0"
 os.environ["PYINSTALLER_VERBOSE"] = "0"
@@ -206,10 +206,9 @@ class CursorRegistration:
             else:
                 print(f"{Fore.RED}{EMOJI['ERROR']} {self.translator.get('register.cursor_auth_info_update_failed')}...{Style.RESET_ALL}")
 
-            # 重置机器ID
+            # Reset machine ID
             print(f"{Fore.CYAN}{EMOJI['UPDATE']} {self.translator.get('register.reset_machine_id')}...{Style.RESET_ALL}")
-            resetter = MachineIDResetter(self.translator)  # 创建实例时传入translator
-            if not resetter.reset_machine_ids(self.app_image_path):  # Pass the app_image_path parameter
+            if not reset_machine_id(self.translator, self.app_image_path):
                 raise Exception("Failed to reset machine ID")
             
             # Save account information to file
