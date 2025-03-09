@@ -11,7 +11,8 @@ get_mac.py
 build.bat
 build.mac.command
 build.py
-build.sh
+
+
 ENV/
 test.py
 
