@@ -105,7 +105,7 @@ class CursorRegistration:
             return None
 
     def register_cursor(self):
-        """Register Cursor"""
+        """Register Cursor - Only handles signup process"""
         browser_tab = None
         try:
             print(f"{Fore.CYAN}{EMOJI['START']} {self.translator.get('register.register_start')}...{Style.RESET_ALL}")
@@ -127,16 +127,7 @@ class CursorRegistration:
             if result:
                 # Use the returned browser instance to get account information
                 self.signup_tab = browser_tab  # Save browser instance
-                success = self._get_account_info()
-                
-                # Close browser after getting information
-                if browser_tab:
-                    try:
-                        browser_tab.quit()
-                    except:
-                        pass
-                
-                return success
+                return True
             
             return False
             
@@ -144,16 +135,21 @@ class CursorRegistration:
             print(f"{Fore.RED}{EMOJI['ERROR']} {self.translator.get('register.register_process_error', error=str(e))}{Style.RESET_ALL}")
             return False
         finally:
-            # Ensure browser is closed in any case
-            if browser_tab:
-                try:
-                    browser_tab.quit()
-                except:
-                    pass
+            if not result:  # Only close if we're not successful - otherwise we need the tab for next step
+                # Ensure browser is closed in case of failure
+                if browser_tab:
+                    try:
+                        browser_tab.quit()
+                    except:
+                        pass
                 
-    def _get_account_info(self):
-        """Get Account Information and Token"""
+    def get_account_info(self):
+        """Get Account Information and Token as separate step"""
         try:
+            if not self.signup_tab:
+                print(f"{Fore.RED}{EMOJI['ERROR']} {self.translator.get('register.no_browser_tab')}{Style.RESET_ALL}")
+                return False, None, None
+                
             self.signup_tab.get(self.settings_url)
             time.sleep(2)
             
@@ -172,6 +168,7 @@ class CursorRegistration:
             max_attempts = 30
             retry_interval = 2
             attempts = 0
+            token = None
 
             while attempts < max_attempts:
                 try:
@@ -180,8 +177,7 @@ class CursorRegistration:
                         if cookie.get("name") == "WorkosCursorSessionToken":
                             token = cookie["value"].split("%3A%3A")[1]
                             print(f"{Fore.GREEN}{EMOJI['SUCCESS']} {self.translator.get('register.token_success')}{Style.RESET_ALL}")
-                            self._save_account_info(token, total_usage)
-                            return True
+                            return True, token, total_usage
 
                     attempts += 1
                     if attempts < max_attempts:
@@ -197,51 +193,105 @@ class CursorRegistration:
                         print(f"{Fore.YELLOW}{EMOJI['WAIT']} {self.translator.get('register.token_attempt', attempt=attempts, time=retry_interval)}{Style.RESET_ALL}")
                         time.sleep(retry_interval)
 
-            return False
+            return False, None, None
 
         except Exception as e:
             print(f"{Fore.RED}{EMOJI['ERROR']} {self.translator.get('register.account_error', error=str(e))}{Style.RESET_ALL}")
+            return False, None, None
+        finally:
+            # Close browser after getting information
+            if self.signup_tab:
+                try:
+                    self.signup_tab.quit()
+                except:
+                    pass
+                self.signup_tab = None
+
+    def update_cursor_auth_info(self, email, token):
+        """Update cursor authentication as a separate step"""
+        try:
+            print(f"{Fore.CYAN}{EMOJI['KEY']} {self.translator.get('register.update_cursor_auth_info')}...{Style.RESET_ALL}")
+            if self.update_cursor_auth(email=email, access_token=token, refresh_token=token):
+                print(f"{Fore.GREEN}{EMOJI['SUCCESS']} {self.translator.get('register.cursor_auth_info_updated')}{Style.RESET_ALL}")
+                return True
+            else:
+                print(f"{Fore.RED}{EMOJI['ERROR']} {self.translator.get('register.cursor_auth_info_update_failed')}{Style.RESET_ALL}")
+                return False
+        except Exception as e:
+            print(f"{Fore.RED}{EMOJI['ERROR']} {self.translator.get('register.update_auth_failed', error=str(e))}{Style.RESET_ALL}")
+            return False
+            
+    def reset_machine_id_step(self):
+        """Reset machine ID as a separate step"""
+        try:
+            print(f"{Fore.CYAN}{EMOJI['UPDATE']} {self.translator.get('register.reset_machine_id')}...{Style.RESET_ALL}")
+            result = reset_machine_id(self.translator)
+            if result:
+                print(f"{Fore.GREEN}{EMOJI['SUCCESS']} {self.translator.get('register.machine_id_reset')}{Style.RESET_ALL}")
+            else:
+                print(f"{Fore.RED}{EMOJI['ERROR']} {self.translator.get('register.machine_id_reset_failed')}{Style.RESET_ALL}")
+            return result
+        except Exception as e:
+            print(f"{Fore.RED}{EMOJI['ERROR']} {self.translator.get('register.reset_machine_failed', error=str(e))}{Style.RESET_ALL}")
             return False
 
-    def _save_account_info(self, token, total_usage):
-        """Save Account Information to File"""
+    def save_account_info_to_file(self, email, password, token, total_usage):
+        """Save account information to file as a separate step"""
         try:
-            # Update authentication information first
-            print(f"{Fore.CYAN}{EMOJI['KEY']} {self.translator.get('register.update_cursor_auth_info')}...{Style.RESET_ALL}")
-            if self.update_cursor_auth(email=self.email_address, access_token=token, refresh_token=token):
-                print(f"{Fore.GREEN}{EMOJI['SUCCESS']} {self.translator.get('register.cursor_auth_info_updated')}...{Style.RESET_ALL}")
-            else:
-                print(f"{Fore.RED}{EMOJI['ERROR']} {self.translator.get('register.cursor_auth_info_update_failed')}...{Style.RESET_ALL}")
-
-            # Reset machine ID
-            print(f"{Fore.CYAN}{EMOJI['UPDATE']} {self.translator.get('register.reset_machine_id')}...{Style.RESET_ALL}")
-            if not reset_machine_id(self.translator, self.app_image_path):
-                raise Exception("Failed to reset machine ID")
-            
             # Save account information to file
             with open('cursor_accounts.txt', 'a', encoding='utf-8') as f:
                 f.write(f"\n{'='*50}\n")
-                f.write(f"Email: {self.email_address}\n")
-                f.write(f"Password: {self.password}\n")
+                f.write(f"Email: {email}\n")
+                f.write(f"Password: {password}\n")
                 f.write(f"Token: {token}\n")
                 f.write(f"Usage Limit: {total_usage}\n")
                 f.write(f"{'='*50}\n")
                 
-            print(f"{Fore.GREEN}{EMOJI['SUCCESS']} {self.translator.get('register.account_info_saved')}...{Style.RESET_ALL}")
+            print(f"{Fore.GREEN}{EMOJI['SUCCESS']} {self.translator.get('register.account_info_saved')}{Style.RESET_ALL}")
             return True
             
         except Exception as e:
             print(f"{Fore.RED}{EMOJI['ERROR']} {self.translator.get('register.save_account_info_failed', error=str(e))}{Style.RESET_ALL}")
             return False
 
-    def start(self):
-        """Start Registration Process"""
-        try:
-            if self.setup_email():
-                if self.register_cursor():
-                    print(f"\n{Fore.GREEN}{EMOJI['DONE']} {self.translator.get('register.cursor_registration_completed')}...{Style.RESET_ALL}")
-                    return True
-            return False
+    def execute_registration_flow(self):
+
+        try :
+            # Step 1: Set up email
+            if not self.setup_email():
+                return False
+                
+            # Step 2: Register with Cursor
+            if not self.register_cursor():
+                return False
+                
+            # Step 3: Get account info
+            success, token, total_usage = self.get_account_info()
+            if not success or not token:
+                return False
+                
+            # Step 4: Update cursor auth information
+            if not self.update_cursor_auth_info(self.email_address, token):
+                return False
+                
+                
+            # Step 5: Save account info to file
+            if not self.save_account_info_to_file(self.email_address, self.password, token, total_usage):
+                return False
+            
+            # Step 6: Reset machine ID
+            self.reset_machine_id_step()
+
+            # Step 7: Patch the app
+            from patch_app import patch_app
+            patch_app(self.app_image_path, self.translator)
+ 
+            
+                
+            # Registration completed successfully
+            print(f"\n{Fore.GREEN}{EMOJI['DONE']} {self.translator.get('register.cursor_registration_completed')}...{Style.RESET_ALL}")
+            return True
+        
         finally:
             # Close email tab
             if hasattr(self, 'temp_email'):
@@ -249,6 +299,7 @@ class CursorRegistration:
                     self.temp_email.close()
                 except:
                     pass
+    
 
     def update_cursor_auth(self, email=None, access_token=None, refresh_token=None):
         """Convenient function to update Cursor authentication information"""
@@ -264,7 +315,7 @@ def main(translator=None, app_image_path=None):
     # No need to normalize path again
     registration = CursorRegistration(translator)
     registration.app_image_path = app_image_path  # Store app_image_path in the registration instance
-    registration.start()
+    registration.execute_registration_flow
 
     print(f"\n{Fore.CYAN}{'='*50}{Style.RESET_ALL}")
     input(f"{EMOJI['INFO']} {translator.get('register.press_enter')}...")
