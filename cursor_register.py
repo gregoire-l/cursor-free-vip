@@ -208,8 +208,7 @@ class CursorRegistration:
 
             # Reset machine ID
             print(f"{Fore.CYAN}{EMOJI['UPDATE']} {self.translator.get('register.reset_machine_id')}...{Style.RESET_ALL}")
-            if not reset_machine_id(self.translator, self.app_image_path):
-                raise Exception("Failed to reset machine ID")
+            reset_machine_id(self.translator)
             
             # Save account information to file
             with open('cursor_accounts.txt', 'a', encoding='utf-8') as f:

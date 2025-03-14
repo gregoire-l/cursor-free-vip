@@ -26,6 +26,7 @@ EMOJI = {
     "BACKUP": "💾",
     "SUCCESS": "✅",
     "ERROR": "❌",
+    "WARNING": "⚠️",
     "INFO": "ℹ️",
     "RESET": "🔄",
     "MENU": "📋",
@@ -305,7 +306,8 @@ def main():
     if args.appImage:
         print(f"{Fore.GREEN}{EMOJI['SUCCESS']} {translator.get('menu.app_image_detected', path=args.appImage)}{Style.RESET_ALL}")
     
-    check_latest_version()  # Add version check before showing menu
+    # disabled to keep my modifications
+    # check_latest_version()  # Add version check before showing menu
     print_menu()
     
     while True:
@@ -318,7 +320,7 @@ def main():
                 return
             elif choice == "1":
                 import reset_machine_manual
-                reset_machine_manual.run(translator, args.appImage)  # Pass appImage path
+                reset_machine_manual.run(translator)
                 print_menu()
             elif choice == "2":
                 import cursor_register
