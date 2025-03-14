@@ -7,7 +7,6 @@ from colorama import Fore, Style
 
 # Import from reset_machine_manual
 from reset_machine_manual import (
-    get_machine_id_paths,
     get_config_paths,
     EMOJI
 )
@@ -20,26 +19,27 @@ def show_machine_ids(translator):
     
     # Get paths using helper functions
     try:
-        package_path, main_path = get_machine_id_paths(translator)
-        settings_path, sqlite_path = get_config_paths()
+        # Get config paths for user data files
+        storage_json_path, sqlite_path, local_machine_id_path = get_config_paths()
     except Exception as e:
         print(f"{Fore.RED}{EMOJI['ERROR']} {translator.get('show_ids.path_error', error=str(e))}{Style.RESET_ALL}")
         raise
     
     # Show file paths
     print(f"\n{Fore.CYAN}{EMOJI['FILE']} {translator.get('show_ids.file_paths')}:{Style.RESET_ALL}")
-    print(f"{Fore.GREEN}1. {translator.get('show_ids.config_path')}: {Style.RESET_ALL}{settings_path}")
+    print(f"{Fore.GREEN}1. {translator.get('show_ids.config_path')}: {Style.RESET_ALL}{storage_json_path}")
     print(f"{Fore.GREEN}2. {translator.get('show_ids.sqlite_path')}: {Style.RESET_ALL}{sqlite_path}")
-    print(f"{Fore.GREEN}3. {translator.get('show_ids.machine_id_path')}: {Style.RESET_ALL}{package_path}")
-    print(f"{Fore.GREEN}4. {translator.get('show_ids.workbench_path')}: {Style.RESET_ALL}{main_path}")
+    print(f"{Fore.GREEN}3. {translator.get('show_ids.machine_id_path')}: {Style.RESET_ALL}{local_machine_id_path}")
+
     
-    # Show JSON config IDs
+    # Show JSON config IDs (from storage.json)
     try:
         print(f"\n{Fore.CYAN}{EMOJI['INFO']} {translator.get('show_ids.json_config_ids')}:{Style.RESET_ALL}")
-        if os.path.exists(settings_path):
-            with open(settings_path, "r", encoding="utf-8") as f:
+        if os.path.exists(storage_json_path):
+            with open(storage_json_path, "r", encoding="utf-8") as f:
                 config = json.load(f)
                 
+            # Show all relevant IDs that would be modified during reset
             machine_ids = {
                 "telemetry.devDeviceId": config.get("telemetry.devDeviceId", ""),
                 "telemetry.machineId": config.get("telemetry.machineId", ""),
@@ -66,7 +66,7 @@ def show_machine_ids(translator):
             table_exists = cursor.fetchone()
             
             if table_exists:
-                # Query all machine IDs in the database
+                # Query all machine IDs in the database including new storage.serviceMachineId
                 cursor.execute("SELECT key, value FROM ItemTable WHERE key LIKE '%machineId%' OR key LIKE '%telemetry%'")
                 rows = cursor.fetchall()
                 
@@ -84,11 +84,11 @@ def show_machine_ids(translator):
     except Exception as e:
         print(f"{Fore.RED}{EMOJI['ERROR']} {translator.get('show_ids.sqlite_error', error=str(e))}{Style.RESET_ALL}")
     
-    # Show machineId file content
+    # Show local machineId file content
     try:
         print(f"\n{Fore.CYAN}{EMOJI['INFO']} {translator.get('show_ids.machine_id_file')}:{Style.RESET_ALL}")
-        if os.path.exists(package_path):
-            with open(package_path, "r", encoding="utf-8") as f:
+        if os.path.exists(local_machine_id_path):
+            with open(local_machine_id_path, "r", encoding="utf-8") as f:
                 machine_id = f.read().strip()
                 print(f"{Fore.GREEN}{translator.get('show_ids.machine_id')}: {Style.RESET_ALL}{machine_id}")
         else:
@@ -116,7 +116,17 @@ def show_machine_ids(translator):
         elif platform.system() == "Darwin":
             print(f"{Fore.YELLOW}{EMOJI['INFO']} {translator.get('show_ids.macos_uuid_info')}{Style.RESET_ALL}")
         elif platform.system() == "Linux":
-            print(f"{Fore.YELLOW}{EMOJI['INFO']} {translator.get('show_ids.linux_uuid_info', os=platform.system())}{Style.RESET_ALL}")
+            # Check if /etc/machine-id exists
+            machine_id_path = "/etc/machine-id"
+            if os.path.exists(machine_id_path):
+                try:
+                    with open(machine_id_path, "r") as f:
+                        machine_id = f.read().strip()
+                    print(f"{Fore.GREEN}Linux machine-id: {Style.RESET_ALL}{machine_id}")
+                except:
+                    print(f"{Fore.YELLOW}{EMOJI['INFO']} {translator.get('show_ids.linux_machine_id_access')}{Style.RESET_ALL}")
+            else:
+                print(f"{Fore.YELLOW}{EMOJI['INFO']} {translator.get('show_ids.linux_uuid_info', os=platform.system())}{Style.RESET_ALL}")
     except Exception as e:
         print(f"{Fore.RED}{EMOJI['ERROR']} {translator.get('show_ids.system_ids_error', error=str(e))}{Style.RESET_ALL}")
     
@@ -128,4 +138,4 @@ def run(translator=None):
     try:
         show_machine_ids(translator)
     except Exception as e:
-        print(f"{Fore.RED}{EMOJI['ERROR']} {translator.get('menu.error_occurred', error=str(e))}{Style.RESET_ALL}") 
+        print(f"{Fore.RED}{EMOJI['ERROR']} {translator.get('menu.error_occurred', error=str(e))}{Style.RESET_ALL}")
