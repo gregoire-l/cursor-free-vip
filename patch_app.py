@@ -391,6 +391,15 @@ def patch_cursor(translator, app_image_path=None) -> bool:
             extracted_dir = extract_appimage(app_image_path, translator)
             if not extracted_dir:
                 return False
+            
+            # Check for patching marker
+            patching_marker = os.path.join(extracted_dir, ".patching_done")
+            if os.path.exists(patching_marker):
+                print(f"{Fore.GREEN}{EMOJI['SUCCESS']} {translator.get('patch.already_patched')}{Style.RESET_ALL}")
+                if not rebuild_appimage(app_image_path, extracted_dir, translator):
+                    return False
+                print(f"{Fore.GREEN}{EMOJI['SUCCESS']} {translator.get('patch.completed')}{Style.RESET_ALL}")
+                return True
         
         try:
             # Get paths (either from system or extracted AppImage)
@@ -417,6 +426,16 @@ def patch_cursor(translator, app_image_path=None) -> bool:
             except Exception as e:
                 print(f"{Fore.RED}{EMOJI['ERROR']} {translator.get('patch.workbench_error', error=str(e))}{Style.RESET_ALL}")
                 return False
+
+            # Create patching marker file if we're working with an AppImage
+            if extracted_dir:
+                try:
+                    patching_marker = os.path.join(extracted_dir, ".patching_done")
+                    with open(patching_marker, "w") as f:
+                        f.write(f"Patched on: {version}")
+                    print(f"{Fore.CYAN}{EMOJI['INFO']} {translator.get('patch.marker_created')}{Style.RESET_ALL}")
+                except Exception as e:
+                    print(f"{Fore.YELLOW}{EMOJI['INFO']} {translator.get('patch.marker_error', error=str(e))}{Style.RESET_ALL}")
 
             # If we're working with an AppImage, rebuild it
             if extracted_dir:
