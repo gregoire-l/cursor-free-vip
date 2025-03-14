@@ -1,3 +1,4 @@
+import hashlib
 import os
 import sys
 import json
@@ -46,7 +47,6 @@ def get_machine_id_paths(translator=None, appimage_dir=None) -> Tuple[str, str]:
         package_path = os.path.join(os.getenv("LOCALAPPDATA"), "Programs", "Cursor", "resources", "app", "package.json")
         main_path = os.path.join(os.getenv("LOCALAPPDATA"), "Programs", "Cursor", "resources", "app", "out", "main.js")
     elif system == "Linux":
-        cursor_config_dir = os.path.join(home, ".config", "cursor")
         for base in ["/opt/Cursor/resources/app", "/usr/share/cursor/resources/app"]:
             if os.path.exists(os.path.join(base, "package.json")):
                 return (
@@ -74,16 +74,15 @@ def get_config_paths() -> Tuple[str, str, str]:
         raise OSError(f"Unsupported operating system: {system}")
         
     return (
-        os.path.join(cursor_config_dir, "User", "settings.json"),
+        os.path.join(cursor_config_dir, "User", "globalStorage", "storage.json"),
         os.path.join(cursor_config_dir, "User", "globalStorage", "state.vscdb"),
-        os.path.join(cursor_config_dir, "User", "machineId")
+        os.path.join(cursor_config_dir, "machineId")
     )
 
-def update_system_machine_id(translator=None) -> bool:
+def update_system_machine_id(new_machine_id: str, translator=None) -> bool:
     """Update system-level machine IDs"""
     try:
         system = platform.system()
-        new_id = str(uuid.uuid4())
         
         if system == "Windows":
             try:
@@ -91,7 +90,7 @@ def update_system_machine_id(translator=None) -> bool:
                 import winreg
                 key_path = r"SOFTWARE\Microsoft\Cryptography"
                 key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_SET_VALUE)
-                winreg.SetValueEx(key, "MachineGuid", 0, winreg.REG_SZ, new_id)
+                winreg.SetValueEx(key, "MachineGuid", 0, winreg.REG_SZ, new_machine_id)
                 winreg.CloseKey(key)
                 print(f"{Fore.GREEN}{EMOJI['SUCCESS']} {translator.get('reset.windows_guid_updated') if translator else 'Windows GUID updated successfully'}{Style.RESET_ALL}")
                 return True
@@ -105,7 +104,7 @@ def update_system_machine_id(translator=None) -> bool:
         elif system == "Darwin":
             try:
                 # Update macOS system UUID using system_profiler
-                cmd = ["sudo", "nvram", f"platform-uuid={new_id.upper()}"]
+                cmd = ["sudo", "nvram", f"platform-uuid={new_machine_id.upper()}"]
                 result = subprocess.run(cmd, capture_output=True, text=True)
                 if result.returncode == 0:
                     print(f"{Fore.GREEN}{EMOJI['SUCCESS']} {translator.get('reset.macos_uuid_updated') if translator else 'macOS UUID updated successfully'}{Style.RESET_ALL}")
@@ -123,7 +122,7 @@ def update_system_machine_id(translator=None) -> bool:
                 if os.path.exists(machine_id_path):
                     # Write new ID to a temporary file
                     with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
-                        temp_file.write(new_id.replace("-", ""))
+                        temp_file.write(new_machine_id.replace("-", ""))
                         temp_path = temp_file.name
                     
                     # Use sudo to copy the temporary file to /etc/machine-id
@@ -148,34 +147,101 @@ def update_system_machine_id(translator=None) -> bool:
     except Exception as e:
         print(f"{Fore.RED}{EMOJI['ERROR']} {translator.get('reset.system_ids_update_failed') if translator else 'System IDs update failed'}: {e}{Style.RESET_ALL}")
         return False
+    
+def generate_new_ids(self):
+    """Generate new machine ID"""
+    # Generate new UUIDw
+    dev_device_id = str(uuid.uuid4())
 
-def update_sqlite_machine_id(db_path: str, translator=None) -> bool:
-    """Update machine ID in SQLite database"""
-    if not os.path.exists(db_path):
-        print(f"{Fore.RED}{EMOJI['ERROR']} {translator.get('auth.db_not_found', path=db_path) if translator else f'Database not found: {db_path}'}{Style.RESET_ALL}")
-        return False
-        
-    try:
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
-        
-        print(f"{Fore.CYAN}{EMOJI['INFO']} {translator.get('auth.connected_to_database') if translator else 'Connected to database'}{Style.RESET_ALL}")
-        
-        new_id = str(uuid.uuid4())
-        cursor.execute("UPDATE ItemTable SET value = ? WHERE key = 'telemetry.machineId'", (new_id,))
-        cursor.execute("UPDATE ItemTable SET value = ? WHERE key = 'workbench.deviceId'", (new_id,))
-        
-        conn.commit()
-        print(f"{Fore.GREEN}{EMOJI['SUCCESS']} {translator.get('auth.database_updated_successfully') if translator else 'Database updated successfully'}{Style.RESET_ALL}")
-        
-        return True
-    except sqlite3.Error as e:
-        print(f"{Fore.RED}{EMOJI['ERROR']} {translator.get('auth.db_connection_error', error=str(e)) if translator else f'Database error: {e}'}{Style.RESET_ALL}")
-        return False
-    finally:
-        if 'conn' in locals():
+    # Generate new machineId (64 characters of hexadecimal)
+    machine_id = hashlib.sha256(os.urandom(32)).hexdigest()
+
+    # Generate new macMachineId (128 characters of hexadecimal)
+    mac_machine_id = hashlib.sha512(os.urandom(64)).hexdigest()
+
+    # Generate new sqmId
+    sqm_id = "{" + str(uuid.uuid4()).upper() + "}"
+
+    self.update_machine_id_file(dev_device_id)
+
+    return {
+        "telemetry.devDeviceId": dev_device_id,
+        "telemetry.macMachineId": mac_machine_id,
+        "telemetry.machineId": machine_id,
+        "telemetry.sqmId": sqm_id,
+        "storage.serviceMachineId": dev_device_id,  # Add storage.serviceMachineId
+    }
+
+def update_sqlite_db(translator, sqlite_path, new_ids):
+        """Update machine ID in SQLite database"""
+        try:
+            print(f"{Fore.CYAN}{EMOJI['INFO']} {translator.get('reset.updating_sqlite')}...{Style.RESET_ALL}")
+            
+            conn = sqlite3.connect(sqlite_path)
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS ItemTable (
+                    key TEXT PRIMARY KEY,
+                    value TEXT
+                )
+            """)
+
+            updates = [
+                (key, value) for key, value in new_ids.items()
+            ]
+
+            for key, value in updates:
+                cursor.execute("""
+                    INSERT OR REPLACE INTO ItemTable (key, value) 
+                    VALUES (?, ?)
+                """, (key, value))
+                print(f"{EMOJI['INFO']} {Fore.CYAN} {translator.get('reset.updating_pair')}: {key}{Style.RESET_ALL}")
+
+            conn.commit()
             conn.close()
-            print(f"{Fore.CYAN}{EMOJI['INFO']} {translator.get('auth.database_connection_closed') if translator else 'Database connection closed'}{Style.RESET_ALL}")
+            print(f"{Fore.GREEN}{EMOJI['SUCCESS']} {translator.get('reset.sqlite_success')}{Style.RESET_ALL}")
+            return True
+
+        except Exception as e:
+            print(f"{Fore.RED}{EMOJI['ERROR']} {translator.get('reset.sqlite_error', error=str(e))}{Style.RESET_ALL}")
+            return False
+
+def update_storage_json(translator, storage_json_path, new_ids):    
+    """Update machine ID in storage.json"""
+    try:
+        print(f"{Fore.CYAN}{EMOJI['INFO']} {translator.get('reset.updating_storage')}...{Style.RESET_ALL}")
+        
+        with open(storage_json_path, "r") as f:
+            storage = json.load(f)
+
+        storage.update(new_ids)
+        
+        # create backup of storage.json
+        backup_path = storage_json_path + ".bak"
+        shutil.copy(storage_json_path, backup_path)
+        print(f"{Fore.GREEN}{EMOJI['BACKUP']} {translator.get('reset.backup_created', path=backup_path)}{Style.RESET_ALL}")
+
+        with open(storage_json_path, "w") as f:
+            json.dump(storage, f, indent=2)
+        
+        print(f"{Fore.GREEN}{EMOJI['SUCCESS']} {translator.get('reset.storage_success')}{Style.RESET_ALL}")
+        return True
+
+    except Exception as e:
+        print(f"{Fore.RED}{EMOJI['ERROR']} {translator.get('reset.storage_error', error=str(e))}{Style.RESET_ALL}")
+        return False
+
+def update_machine_id_file(translator, local_machine_id_file_path, new_machine_id):
+    """Update machine ID in machineId file"""
+    try:
+        with open(local_machine_id_file_path, "w") as f:
+            f.write(new_machine_id)
+        print(f"{Fore.GREEN}{EMOJI['SUCCESS']} {translator.get('reset.localMachineId_completed') if translator else 'Machine ID reset successfully'}{Style.RESET_ALL}")
+    except Exception as e:
+        print(f"{Fore.RED}{EMOJI['ERROR']} {translator.get('reset.localMachineId_failed', error=str(e)) if translator else f'Reset process error: {str(e)}'}{Style.RESET_ALL}")
+        return False
+
 
 def reset_machine_id(translator=None) -> bool:
     """Reset machine ID in all locations"""
@@ -191,46 +257,32 @@ def reset_machine_id(translator=None) -> bool:
             json_path, sqlite_path, localMachineId_path = get_config_paths()
             
             # Generate new machine ID
-            new_machine_id = str(uuid.uuid4())
-            
-            # Update JSON config
+            ids = generate_new_ids()
+
+            # Update storage.json
             if os.path.exists(json_path):
-                try:
-                    with open(json_path, "r+") as f:
-                        config = json.load(f)
-                        config["machine-id"] = new_machine_id
-                        f.seek(0)
-                        json.dump(config, f, indent=2)
-                        f.truncate()
-                    print(f"{Fore.GREEN}{EMOJI['SUCCESS']} {translator.get('reset.success') if translator else 'Machine ID reset successfully'}{Style.RESET_ALL}")
-                except Exception as e:
-                    print(f"{Fore.RED}{EMOJI['ERROR']} {translator.get('reset.process_error', error=str(e)) if translator else f'Reset process error: {str(e)}'}{Style.RESET_ALL}")
+                if not update_storage_json(translator, json_path, ids):
                     success = False
             else:
-                print(f"{Fore.YELLOW}{EMOJI['WARNING']} {translator.get('reset.not_found', path=json_path) if translator else f'File not found: {json_path}'}{Style.RESET_ALL}")
-               
+                print(f"{Fore.RED}{EMOJI['WARNING']} {translator.get('reset.not_found', path=json_path) if translator else f'File not found: {json_path}'}{Style.RESET_ALL}")
             
+
             # Update SQLite database
             if os.path.exists(sqlite_path):
-                if not update_sqlite_machine_id(sqlite_path, translator):
+                if not update_sqlite_db(translator, sqlite_path, ids):
                     success = False
             else:
                 print(f"{Fore.RED}{EMOJI['WARNING']} {translator.get('reset.not_found', path=sqlite_path) if translator else f'File not found: {sqlite_path}'}{Style.RESET_ALL}")
             
             # Update local machine ID
             if os.path.exists(localMachineId_path):
-                try:
-                    with open(localMachineId_path, "w") as f:
-                        f.write(new_machine_id)
-                    print(f"{Fore.GREEN}{EMOJI['SUCCESS']} {translator.get('reset.localMachineId_completed') if translator else 'Machine ID reset successfully'}{Style.RESET_ALL}")
-                except Exception as e:
-                    print(f"{Fore.RED}{EMOJI['ERROR']} {translator.get('reset.localMachineId_failed', error=str(e)) if translator else f'Reset process error: {str(e)}'}{Style.RESET_ALL}")
+                if not update_machine_id_file(translator, localMachineId_path, ids["telemetry.devDeviceId"]):
                     success = False
             else:
                 print(f"{Fore.RED}{EMOJI['WARNING']} {translator.get('reset.not_found', path=localMachineId_path) if translator else f'File not found: {localMachineId_path}'}{Style.RESET_ALL}")
 
             # Update system machine ID
-            if not update_system_machine_id(translator):
+            if not update_system_machine_id(ids["telemetry.machineId"],translator):
                 success = False
             
             return success

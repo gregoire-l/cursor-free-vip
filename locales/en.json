@@ -96,7 +96,12 @@
         "cleanup_error": "Error Cleaning Temporary Files: {error}",
         "appimage_extract_failed": "Failed to Extract AppImage",
         "cleaning_temp_files": "Cleaning Temporary Files",
-        "using_appimage": "Using AppImage: {path}"
+        "using_appimage": "Using AppImage: {path}",
+        "updating_storage": "Updating storage.json file",
+        "backup_created": "Backup created at: {path}",
+        "storage_success": "Storage file updated successfully",
+        "storage_error": "Storage file update failed: {error}",
+        "file_not_found": "File not found: {path}"
     },
     "register": {
         "title": "Cursor Registration Tool",
@@ -325,6 +330,7 @@
         "press_enter": "Press Enter to return to menu...",
         "already_patched": "AppImage already patched, skipping patch process",
         "marker_created": "Patching marker created in AppImage",
-        "marker_error": "Failed to create patching marker: {error}"
+        "marker_error": "Failed to create patching marker: {error}",
+        "workbench_not_found": "Workbench file not found in any of these locations"
     }
 }
