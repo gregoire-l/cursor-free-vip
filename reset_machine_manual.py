@@ -148,7 +148,7 @@ def update_system_machine_id(new_machine_id: str, translator=None) -> bool:
         print(f"{Fore.RED}{EMOJI['ERROR']} {translator.get('reset.system_ids_update_failed') if translator else 'System IDs update failed'}: {e}{Style.RESET_ALL}")
         return False
     
-def generate_new_ids(self):
+def generate_new_ids():
     """Generate new machine ID"""
     # Generate new UUIDw
     dev_device_id = str(uuid.uuid4())
@@ -161,8 +161,6 @@ def generate_new_ids(self):
 
     # Generate new sqmId
     sqm_id = "{" + str(uuid.uuid4()).upper() + "}"
-
-    self.update_machine_id_file(dev_device_id)
 
     return {
         "telemetry.devDeviceId": dev_device_id,
