@@ -19,6 +19,7 @@ EMOJI = {
     "BACKUP": "💾",
     "SUCCESS": "✅",
     "ERROR": "❌",
+    "WARNING": "⚠️",
     "INFO": "ℹ️",
     "RESET": "🔄",
 }
@@ -58,7 +59,7 @@ def get_machine_id_paths(translator=None, appimage_dir=None) -> Tuple[str, str]:
 
     return (package_path, main_path)
 
-def get_config_paths() -> Tuple[str, str]:
+def get_config_paths() -> Tuple[str, str, str]:
     """Get paths to configuration files"""
     system = platform.system()
     home = os.path.expanduser("~")
@@ -68,13 +69,14 @@ def get_config_paths() -> Tuple[str, str]:
     elif system == "Windows":
         cursor_config_dir = os.path.join(os.getenv("APPDATA"), "cursor")
     elif system == "Linux":
-        cursor_config_dir = os.path.join(home, ".config", "cursor")
+        cursor_config_dir = os.path.join(home, ".config", "Cursor")
     else:
         raise OSError(f"Unsupported operating system: {system}")
         
     return (
         os.path.join(cursor_config_dir, "User", "settings.json"),
-        os.path.join(cursor_config_dir, "User", "globalStorage", "state.vscdb")
+        os.path.join(cursor_config_dir, "User", "globalStorage", "state.vscdb"),
+        os.path.join(cursor_config_dir, "User", "machineId")
     )
 
 def update_system_machine_id(translator=None) -> bool:
@@ -175,19 +177,18 @@ def update_sqlite_machine_id(db_path: str, translator=None) -> bool:
             conn.close()
             print(f"{Fore.CYAN}{EMOJI['INFO']} {translator.get('auth.database_connection_closed') if translator else 'Database connection closed'}{Style.RESET_ALL}")
 
-def reset_machine_id(translator=None, appimage_path=None) -> bool:
+def reset_machine_id(translator=None) -> bool:
     """Reset machine ID in all locations"""
     try:
         print(f"\n{Fore.CYAN}{'='*50}{Style.RESET_ALL}")
         print(f"{Fore.CYAN}{EMOJI['RESET']} {translator.get('reset.title') if translator else 'Cursor Machine ID Reset Tool'}{Style.RESET_ALL}")
         print(f"{Fore.CYAN}{'='*50}{Style.RESET_ALL}")
 
-        extracted_dir = None
         success = True
         
         try:
             # Get configuration paths
-            json_path, sqlite_path = get_config_paths()
+            json_path, sqlite_path, localMachineId_path = get_config_paths()
             
             # Generate new machine ID
             new_machine_id = str(uuid.uuid4())
@@ -205,12 +206,29 @@ def reset_machine_id(translator=None, appimage_path=None) -> bool:
                 except Exception as e:
                     print(f"{Fore.RED}{EMOJI['ERROR']} {translator.get('reset.process_error', error=str(e)) if translator else f'Reset process error: {str(e)}'}{Style.RESET_ALL}")
                     success = False
+            else:
+                print(f"{Fore.YELLOW}{EMOJI['WARNING']} {translator.get('reset.not_found', path=json_path) if translator else f'File not found: {json_path}'}{Style.RESET_ALL}")
+               
             
             # Update SQLite database
             if os.path.exists(sqlite_path):
                 if not update_sqlite_machine_id(sqlite_path, translator):
                     success = False
+            else:
+                print(f"{Fore.RED}{EMOJI['WARNING']} {translator.get('reset.not_found', path=sqlite_path) if translator else f'File not found: {sqlite_path}'}{Style.RESET_ALL}")
             
+            # Update local machine ID
+            if os.path.exists(localMachineId_path):
+                try:
+                    with open(localMachineId_path, "w") as f:
+                        f.write(new_machine_id)
+                    print(f"{Fore.GREEN}{EMOJI['SUCCESS']} {translator.get('reset.localMachineId_completed') if translator else 'Machine ID reset successfully'}{Style.RESET_ALL}")
+                except Exception as e:
+                    print(f"{Fore.RED}{EMOJI['ERROR']} {translator.get('reset.localMachineId_failed', error=str(e)) if translator else f'Reset process error: {str(e)}'}{Style.RESET_ALL}")
+                    success = False
+            else:
+                print(f"{Fore.RED}{EMOJI['WARNING']} {translator.get('reset.not_found', path=localMachineId_path) if translator else f'File not found: {localMachineId_path}'}{Style.RESET_ALL}")
+
             # Update system machine ID
             if not update_system_machine_id(translator):
                 success = False
@@ -225,9 +243,9 @@ def reset_machine_id(translator=None, appimage_path=None) -> bool:
         print(f"{Fore.RED}{EMOJI['ERROR']} {translator.get('reset.process_error', error=str(e)) if translator else f'Reset process error: {str(e)}'}{Style.RESET_ALL}")
         return False
 
-def run(translator=None, appimage_path=None):
+def run(translator=None):
     """Main function to reset machine ID"""
-    success = reset_machine_id(translator, appimage_path)
+    success = reset_machine_id(translator)
     
     print(f"\n{Fore.CYAN}{'='*50}{Style.RESET_ALL}")
     input(f"{EMOJI['INFO']} {translator.get('reset.press_enter') if translator else 'Press Enter to exit...'}...")
@@ -246,4 +264,4 @@ if __name__ == "__main__":
         except:
             pass
     
-    run(main_translator, app_image_path)
+    run(main_translator)

@@ -35,7 +35,7 @@
     "reset": {
         "title": "Cursor Machine ID Reset Tool",
         "checking": "Checking Config File",
-        "not_found": "Config File Not Found",
+        "not_found": "Config File Not Found: {path}",
         "no_permission": "Cannot Read or Write Config File, Please Check File Permissions",
         "reading": "Reading Current Config",
         "creating_backup": "Creating Config Backup",
@@ -68,6 +68,8 @@
         "current_version": "Current Cursor Version: {version}",
         "patch_completed": "Patching getMachineId Completed",
         "patch_failed": "Patching getMachineId Failed: {error}",
+        "localMachineId_completed" : "Editing config machineId file Completed",
+        "localMachineId_failed" : "Editing config machineId file Failed: {error}",
         "version_check_passed": "Cursor Version Check Passed",
         "file_modified": "File Modified",
         "version_less_than_0_45": "Cursor Version < 0.45.0, Skip Patching getMachineId",
@@ -320,6 +322,9 @@
         "cleaning_temp_files": "Cleaning up temporary files...",
         "cleanup_error": "Error during cleanup: {error}",
         "workbench_error": "Error modifying workbench: {error}",
-        "press_enter": "Press Enter to return to menu..."
+        "press_enter": "Press Enter to return to menu...",
+        "already_patched": "AppImage already patched, skipping patch process",
+        "marker_created": "Patching marker created in AppImage",
+        "marker_error": "Failed to create patching marker: {error}"
     }
 }
